@@ -1,0 +1,20 @@
+# Changes here will be overwritten by Copier
+_commit: 1.5.6
+_src_path: gh:pawamoy/copier-uv
+author_email: dev@pawamoy.fr
+author_fullname: Timothée Mazzucotelli
+author_username: pawamoy
+copyright_date: '2025'
+copyright_holder: Timothée Mazzucotelli
+copyright_holder_email: dev@pawamoy.fr
+copyright_license: ISC License
+insiders: false
+project_description: MkDocs plugin to generate an /llms.txt file.
+project_name: mkdocs-llmstxt
+python_package_command_line_name: ''
+python_package_distribution_name: mkdocs-llmstxt
+python_package_import_name: mkdocs_llmstxt
+repository_name: mkdocs-llmstxt
+repository_namespace: pawamoy
+repository_provider: github.com
+

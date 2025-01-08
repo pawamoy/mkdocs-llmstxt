@@ -1,0 +1,186 @@
+site_name: "mkdocs-llmstxt"
+site_description: "MkDocs plugin to generate an /llms.txt file."
+site_url: "https://pawamoy.github.io/mkdocs-llmstxt"
+repo_url: "https://github.com/pawamoy/mkdocs-llmstxt"
+repo_name: "pawamoy/mkdocs-llmstxt"
+site_dir: "site"
+watch: [mkdocs.yml, README.md, CONTRIBUTING.md, CHANGELOG.md, src/mkdocs_llmstxt]
+copyright: Copyright &copy; 2025 Timothée Mazzucotelli
+edit_uri: edit/main/docs/
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+
+nav:
+- Home:
+  - Overview: index.md
+  - Changelog: changelog.md
+  - Credits: credits.md
+  - License: license.md
+# defer to gen-files + literate-nav
+- API reference:
+  - mkdocs-llmstxt: reference/
+- Development:
+  - Contributing: contributing.md
+  - Code of Conduct: code_of_conduct.md
+  - Coverage report: coverage.md
+- Author's website: https://pawamoy.github.io/
+
+theme:
+  name: material
+  custom_dir: docs/.overrides
+  icon:
+    logo: material/currency-sign
+  features:
+  - announce.dismiss
+  - content.action.edit
+  - content.action.view
+  - content.code.annotate
+  - content.code.copy
+  - content.tooltips
+  - navigation.footer
+  - navigation.indexes
+  - navigation.sections
+  - navigation.tabs
+  - navigation.tabs.sticky
+  - navigation.top
+  - search.highlight
+  - search.suggest
+  - toc.follow
+  palette:
+  - media: "(prefers-color-scheme)"
+    toggle:
+      icon: material/brightness-auto
+      name: Switch to light mode
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    primary: teal
+    accent: purple
+    toggle:
+      icon: material/weather-sunny
+      name: Switch to dark mode
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: black
+    accent: lime
+    toggle:
+      icon: material/weather-night
+      name: Switch to system preference
+
+extra_css:
+- css/material.css
+- css/mkdocstrings.css
+
+extra_javascript:
+- js/feedback.js
+
+markdown_extensions:
+- attr_list
+- admonition
+- callouts
+- footnotes
+- pymdownx.emoji:
+    emoji_index: !!python/name:material.extensions.emoji.twemoji
+    emoji_generator: !!python/name:material.extensions.emoji.to_svg
+- pymdownx.magiclink
+- pymdownx.snippets:
+    base_path: [!relative $config_dir]
+    check_paths: true
+- pymdownx.superfences
+- pymdownx.tabbed:
+    alternate_style: true
+    slugify: !!python/object/apply:pymdownx.slugs.slugify
+      kwds:
+        case: lower
+- pymdownx.tasklist:
+    custom_checkbox: true
+- toc:
+    permalink: !ENV [PERMALINK, "¤"]
+
+plugins:
+- search
+- markdown-exec
+- gen-files:
+    scripts:
+    - scripts/gen_ref_nav.py
+- literate-nav:
+    nav_file: SUMMARY.md
+- coverage
+- mkdocstrings:
+    handlers:
+      python:
+        import:
+        - https://docs.python.org/3/objects.inv
+        - https://www.crummy.com/software/BeautifulSoup/bs4/doc/objects.inv
+        paths: [src]
+        options:
+          docstring_options:
+            ignore_init_summary: true
+          docstring_section_style: list
+          filters: ["!^_"]
+          heading_level: 1
+          inherited_members: true
+          merge_init_into_class: true
+          separate_signature: true
+          show_root_heading: true
+          show_root_full_path: false
+          show_signature_annotations: true
+          show_source: true
+          show_symbol_type_heading: true
+          show_symbol_type_toc: true
+          signature_crossrefs: true
+          summary: true
+- git-revision-date-localized:
+    enabled: !ENV [DEPLOY, false]
+    enable_creation_date: true
+    type: timeago
+- manpage:
+    preprocess: scripts/preprocess.py
+    pages:
+    - title: MkDocs Manpage
+      header: MkDocs plugins
+      output: share/man/man1/mkdocs-manpage.1
+      inputs:
+      - index.md
+      - changelog.md
+      - contributing.md
+      - credits.md
+      - license.md
+    - title: mkdocs-manpage API
+      header: Python Library APIs
+      output: share/man/man3/mkdocs_manpage.3
+      inputs:
+      - reference/mkdocs_manpage/*.md
+- minify:
+    minify_html: !ENV [DEPLOY, false]
+- group:
+    enabled: !ENV [MATERIAL_INSIDERS, false]
+    plugins:
+    - typeset
+
+extra:
+  social:
+  - icon: fontawesome/brands/github
+    link: https://github.com/pawamoy
+  - icon: fontawesome/brands/mastodon
+    link: https://fosstodon.org/@pawamoy
+  - icon: fontawesome/brands/twitter
+    link: https://twitter.com/pawamoy
+  - icon: fontawesome/brands/gitter
+    link: https://gitter.im/mkdocs-llmstxt/community
+  - icon: fontawesome/brands/python
+    link: https://pypi.org/project/mkdocs-llmstxt/
+  analytics:
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: Let us know how we can improve this page.

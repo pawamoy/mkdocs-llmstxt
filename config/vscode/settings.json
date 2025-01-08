@@ -1,0 +1,33 @@
+{
+    "files.watcherExclude": {
+        "**/.venv*/**": true,
+        "**/.venvs*/**": true,
+        "**/venv*/**": true
+    },
+    "mypy-type-checker.args": [
+        "--config-file=config/mypy.ini"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "--config-file=config/pytest.ini"
+    ],
+    "ruff.enable": true,
+    "ruff.format.args": [
+        "--config=config/ruff.toml"
+    ],
+    "ruff.lint.args": [
+        "--config=config/ruff.toml"
+    ],
+    "yaml.schemas": {
+        "https://squidfunk.github.io/mkdocs-material/schema.json": "mkdocs.yml"
+    },
+    "yaml.customTags": [
+        "!ENV scalar",
+        "!ENV sequence",
+        "!relative scalar",
+        "tag:yaml.org,2002:python/name:materialx.emoji.to_svg",
+        "tag:yaml.org,2002:python/name:materialx.emoji.twemoji",
+        "tag:yaml.org,2002:python/name:pymdownx.superfences.fence_code_format"
+    ]
+}

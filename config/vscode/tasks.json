@@ -1,0 +1,97 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "changelog",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["changelog"]
+        },
+        {
+            "label": "check",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["check"]
+        },
+        {
+            "label": "check-quality",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["check-quality"]
+        },
+        {
+            "label": "check-types",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["check-types"]
+        },
+        {
+            "label": "check-docs",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["check-docs"]
+        },
+        {
+            "label": "check-api",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["check-api"]
+        },
+        {
+            "label": "clean",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["clean"]
+        },
+        {
+            "label": "docs",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["docs"]
+        },
+        {
+            "label": "docs-deploy",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["docs-deploy"]
+        },
+        {
+            "label": "format",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["format"]
+        },
+        {
+            "label": "release",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["release", "${input:version}"]
+        },
+        {
+            "label": "setup",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["setup"]
+        },
+        {
+            "label": "test",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["test", "coverage"],
+            "group": "test"
+        },
+        {
+            "label": "vscode",
+            "type": "process",
+            "command": "scripts/make",
+            "args": ["vscode"]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "version",
+            "type": "promptString",
+            "description": "Version"
+        }
+    ]
+}
