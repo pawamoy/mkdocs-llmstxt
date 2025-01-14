@@ -201,14 +201,3 @@ def test(ctx: Context, *cli_args: str, match: str = "") -> None:
         ).add_args("-n", "auto", *cli_args),
         title=pyprefix("Running tests"),
     )
-
-
-@duty(aliases=["man"])
-def manpage(ctx: Context) -> None:
-    """Generate a man page.
-
-    Parameters:
-        ctx: The context instance (passed automatically).
-    """
-    ctx.run(tools.mkdocs.build(), title="Building docs and manpage")
-    ctx.run("man ./site/manpage.1", capture=False)

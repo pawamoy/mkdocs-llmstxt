@@ -15,7 +15,6 @@ actions = \
 	docs \
 	docs-deploy \
 	format \
-	manpage \
 	help \
 	multirun \
 	release \
