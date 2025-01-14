@@ -140,23 +140,12 @@ plugins:
     enabled: !ENV [DEPLOY, false]
     enable_creation_date: true
     type: timeago
-- manpage:
-    preprocess: scripts/preprocess.py
-    pages:
-    - title: MkDocs Manpage
-      header: MkDocs plugins
-      output: share/man/man1/mkdocs-manpage.1
+- llmstxt:
+    files:
+    - output: llms.txt
       inputs:
       - index.md
-      - changelog.md
-      - contributing.md
-      - credits.md
-      - license.md
-    - title: mkdocs-manpage API
-      header: Python Library APIs
-      output: share/man/man3/mkdocs_manpage.3
-      inputs:
-      - reference/mkdocs_manpage/*.md
+      - reference/mkdocs_llmstxt/*.md
 - minify:
     minify_html: !ENV [DEPLOY, false]
 - group:

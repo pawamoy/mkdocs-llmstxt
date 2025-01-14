@@ -28,12 +28,10 @@ classifiers = [
     "Topic :: Utilities",
     "Typing :: Typed",
 ]
-dependencies = []
-
-[project.optional-dependencies]
-preprocess = [
+dependencies = [
     "beautifulsoup4>=4.12",
-    "lxml>=5.3",
+    "markdownify>=0.14",
+    "mdformat>=0.7.21",
 ]
 
 [project.urls]
