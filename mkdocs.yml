@@ -84,6 +84,9 @@ markdown_extensions:
 - pymdownx.emoji:
     emoji_index: !!python/name:material.extensions.emoji.twemoji
     emoji_generator: !!python/name:material.extensions.emoji.to_svg
+- pymdownx.highlight:
+    use_pygments: true
+    pygments_lang_class: true
 - pymdownx.magiclink
 - pymdownx.snippets:
     base_path: [!relative $config_dir]
