@@ -1,0 +1,833 @@
+# mkdocs-llmstxt
+
+MkDocs plugin to generate an [/llms.txt file](https://llmstxt.org/).
+
+> /llms.txt - A proposal to standardise on using an /llms.txt file to provide information to help LLMs use a website at inference time.
+
+See our own dynamically generated [/llms.txt](llms.txt) as a demonstration.
+
+## Installation
+
+```bash
+pip install mkdocs-llmstxt
+
+```
+
+## Usage
+
+Enable the plugin in `mkdocs.yml`:
+
+mkdocs.yml
+
+```yaml
+plugins:
+- llmstxt:
+    files:
+    - output: llms.txt
+      inputs:
+      - file1.md
+      - folder/file2.md
+
+```
+
+You can generate several files, each from its own set of input files.
+
+File globbing is supported:
+
+mkdocs.yml
+
+```yaml
+plugins:
+- llmstxt:
+    files:
+    - output: llms.txt
+      inputs:
+      - file1.md
+      - reference/*/*.md
+
+```
+
+The plugin will concatenate the rendered HTML of these input pages, clean it up a bit (with [BeautifulSoup](https://pypi.org/project/beautifulsoup4/)), convert it back to Markdown (with [Markdownify](https://pypi.org/project/markdownify)), and format it (with [Mdformat](https://pypi.org/project/mdformat)). By concatenating HTML instead of Markdown, we ensure that dynamically generated contents (API documentation, executed code blocks, snippets from other files, Jinja macros, etc.) are part of the generated text files. Credits to [Petyo Ivanov](https://github.com/petyosi) for the original idea ✨
+
+You can disable auto-cleaning of the HTML:
+
+mkdocs.yml
+
+```yaml
+plugins:
+- llmstxt:
+    autoclean: false
+
+```
+
+You can also pre-process the HTML before it is converted back to Markdown:
+
+mkdocs.yml
+
+```yaml
+plugins:
+- llmstxt:
+    preprocess: path/to/script.py
+
+```
+
+The specified `script.py` must expose a `preprocess` function that accepts the `soup` and `output` arguments:
+
+```python
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bs4 import BeautifulSoup
+
+def preprocess(soup: BeautifulSoup, output: str) -> None:
+    ...  # modify the soup
+
+```
+
+The `output` argument lets you modify the soup *depending on which file is being generated*.
+
+Have a look at [our own pre-processing function](https://pawamoy.github.io/mkdocs-llmstxt/reference/mkdocs_llmstxt/preprocess/#mkdocs_llmstxt.preprocess.autoclean) to get inspiration.
+
+# mkdocs_llmstxt
+
+mkdocs-llmstxt package.
+
+MkDocs plugin to generate an /llms.txt file.
+
+Modules:
+
+- **`config`** – Configuration options for the MkDocs LLMsTxt plugin.
+- **`debug`** – Debugging utilities.
+- **`logger`** – Logging functions.
+- **`plugin`** – MkDocs plugin that generates a Markdown file at the end of the build.
+- **`preprocess`** – HTML pre-processing.
+
+# config
+
+Configuration options for the MkDocs LLMsTxt plugin.
+
+Classes:
+
+- **`FileConfig`** – Sub-config for each Markdown file.
+- **`PluginConfig`** – Configuration options for the plugin.
+
+## FileConfig
+
+Bases: `Config`
+
+Sub-config for each Markdown file.
+
+## PluginConfig
+
+Bases: `Config`
+
+Configuration options for the plugin.
+
+# debug
+
+Debugging utilities.
+
+Classes:
+
+- **`Environment`** – Dataclass to store environment information.
+- **`Package`** – Dataclass describing a Python package.
+- **`Variable`** – Dataclass describing an environment variable.
+
+Functions:
+
+- **`get_debug_info`** – Get debug/environment information.
+- **`get_version`** – Get version of the given distribution.
+- **`print_debug_info`** – Print debug/environment information.
+
+## Environment
+
+```python
+Environment(
+    interpreter_name: str,
+    interpreter_version: str,
+    interpreter_path: str,
+    platform: str,
+    packages: list[Package],
+    variables: list[Variable],
+)
+
+```
+
+Dataclass to store environment information.
+
+Attributes:
+
+- **`interpreter_name`** (`str`) – Python interpreter name.
+- **`interpreter_path`** (`str`) – Path to Python executable.
+- **`interpreter_version`** (`str`) – Python interpreter version.
+- **`packages`** (`list[Package]`) – Installed packages.
+- **`platform`** (`str`) – Operating System.
+- **`variables`** (`list[Variable]`) – Environment variables.
+
+### interpreter_name
+
+```python
+interpreter_name: str
+
+```
+
+Python interpreter name.
+
+### interpreter_path
+
+```python
+interpreter_path: str
+
+```
+
+Path to Python executable.
+
+### interpreter_version
+
+```python
+interpreter_version: str
+
+```
+
+Python interpreter version.
+
+### packages
+
+```python
+packages: list[Package]
+
+```
+
+Installed packages.
+
+### platform
+
+```python
+platform: str
+
+```
+
+Operating System.
+
+### variables
+
+```python
+variables: list[Variable]
+
+```
+
+Environment variables.
+
+## Package
+
+```python
+Package(name: str, version: str)
+
+```
+
+Dataclass describing a Python package.
+
+Attributes:
+
+- **`name`** (`str`) – Package name.
+- **`version`** (`str`) – Package version.
+
+### name
+
+```python
+name: str
+
+```
+
+Package name.
+
+### version
+
+```python
+version: str
+
+```
+
+Package version.
+
+## Variable
+
+```python
+Variable(name: str, value: str)
+
+```
+
+Dataclass describing an environment variable.
+
+Attributes:
+
+- **`name`** (`str`) – Variable name.
+- **`value`** (`str`) – Variable value.
+
+### name
+
+```python
+name: str
+
+```
+
+Variable name.
+
+### value
+
+```python
+value: str
+
+```
+
+Variable value.
+
+## get_debug_info
+
+```python
+get_debug_info() -> Environment
+
+```
+
+Get debug/environment information.
+
+Returns:
+
+- `Environment` – Environment information.
+
+Source code in `src/mkdocs_llmstxt/debug.py`
+
+```python
+def get_debug_info() -> Environment:
+    """Get debug/environment information.
+
+    Returns:
+        Environment information.
+    """
+    py_name, py_version = _interpreter_name_version()
+    packages = ["mkdocs-llmstxt"]
+    variables = ["PYTHONPATH", *[var for var in os.environ if var.startswith("MKDOCS_LLMSTXT")]]
+    return Environment(
+        interpreter_name=py_name,
+        interpreter_version=py_version,
+        interpreter_path=sys.executable,
+        platform=platform.platform(),
+        variables=[Variable(var, val) for var in variables if (val := os.getenv(var))],
+        packages=[Package(pkg, get_version(pkg)) for pkg in packages],
+    )
+
+```
+
+## get_version
+
+```python
+get_version(dist: str = 'mkdocs-llmstxt') -> str
+
+```
+
+Get version of the given distribution.
+
+Parameters:
+
+- **`dist`** (`str`, default: `'mkdocs-llmstxt'` ) – A distribution name.
+
+Returns:
+
+- `str` – A version number.
+
+Source code in `src/mkdocs_llmstxt/debug.py`
+
+```python
+def get_version(dist: str = "mkdocs-llmstxt") -> str:
+    """Get version of the given distribution.
+
+    Parameters:
+        dist: A distribution name.
+
+    Returns:
+        A version number.
+    """
+    try:
+        return metadata.version(dist)
+    except metadata.PackageNotFoundError:
+        return "0.0.0"
+
+```
+
+## print_debug_info
+
+```python
+print_debug_info() -> None
+
+```
+
+Print debug/environment information.
+
+Source code in `src/mkdocs_llmstxt/debug.py`
+
+```python
+def print_debug_info() -> None:
+    """Print debug/environment information."""
+    info = get_debug_info()
+    print(f"- __System__: {info.platform}")
+    print(f"- __Python__: {info.interpreter_name} {info.interpreter_version} ({info.interpreter_path})")
+    print("- __Environment variables__:")
+    for var in info.variables:
+        print(f"  - `{var.name}`: `{var.value}`")
+    print("- __Installed packages__:")
+    for pkg in info.packages:
+        print(f"  - `{pkg.name}` v{pkg.version}")
+
+```
+
+# logger
+
+Logging functions.
+
+Classes:
+
+- **`PluginLogger`** – A logger adapter to prefix messages with the originating package name.
+
+Functions:
+
+- **`get_logger`** – Return a logger for plugins.
+
+## PluginLogger
+
+```python
+PluginLogger(prefix: str, logger: Logger)
+
+```
+
+Bases: `LoggerAdapter`
+
+A logger adapter to prefix messages with the originating package name.
+
+Parameters:
+
+- **`prefix`** (`str`) – The string to insert in front of every message.
+- **`logger`** (`Logger`) – The logger instance.
+
+Methods:
+
+- **`process`** – Process the message.
+
+Source code in `src/mkdocs_llmstxt/logger.py`
+
+```python
+def __init__(self, prefix: str, logger: logging.Logger):
+    """Initialize the object.
+
+    Arguments:
+        prefix: The string to insert in front of every message.
+        logger: The logger instance.
+    """
+    super().__init__(logger, {})
+    self.prefix = prefix
+
+```
+
+### process
+
+```python
+process(
+    msg: str, kwargs: MutableMapping[str, Any]
+) -> tuple[str, Any]
+
+```
+
+Process the message.
+
+Parameters:
+
+- **`msg`** (`str`) – The message:
+- **`kwargs`** (`MutableMapping[str, Any]`) – Remaining arguments.
+
+Returns:
+
+- `tuple[str, Any]` – The processed message.
+
+Source code in `src/mkdocs_llmstxt/logger.py`
+
+```python
+def process(self, msg: str, kwargs: MutableMapping[str, Any]) -> tuple[str, Any]:
+    """Process the message.
+
+    Arguments:
+        msg: The message:
+        kwargs: Remaining arguments.
+
+    Returns:
+        The processed message.
+    """
+    return f"{self.prefix}: {msg}", kwargs
+
+```
+
+## get_logger
+
+```python
+get_logger(name: str) -> PluginLogger
+
+```
+
+Return a logger for plugins.
+
+Parameters:
+
+- **`name`** (`str`) – The name to use with logging.getLogger.
+
+Returns:
+
+- `PluginLogger` – A logger configured to work well in MkDocs, prefixing each message with the plugin package name.
+
+Source code in `src/mkdocs_llmstxt/logger.py`
+
+```python
+def get_logger(name: str) -> PluginLogger:
+    """Return a logger for plugins.
+
+    Arguments:
+        name: The name to use with `logging.getLogger`.
+
+    Returns:
+        A logger configured to work well in MkDocs,
+            prefixing each message with the plugin package name.
+    """
+    logger = logging.getLogger(f"mkdocs.plugins.{name}")
+    return PluginLogger(name.split(".", 1)[0], logger)
+
+```
+
+# plugin
+
+MkDocs plugin that generates a Markdown file at the end of the build.
+
+Classes:
+
+- **`MkdocsLLMsTxtPlugin`** – The MkDocs plugin to generate an llms.txt file.
+
+## MkdocsLLMsTxtPlugin
+
+```python
+MkdocsLLMsTxtPlugin()
+
+```
+
+Bases: `BasePlugin[PluginConfig]`
+
+The MkDocs plugin to generate an `llms.txt` file.
+
+This plugin defines the following event hooks:
+
+- `on_page_content`
+- `on_post_build`
+
+Check the [Developing Plugins](https://www.mkdocs.org/user-guide/plugins/#developing-plugins) page of `mkdocs` for more information about its plugin system.
+
+Methods:
+
+- **`on_config`** – Save the global MkDocs configuration.
+- **`on_files`** – Expand inputs for generated files.
+- **`on_page_content`** – Record pages contents.
+- **`on_post_build`** – Combine all recorded pages contents and convert it to a Markdown file with BeautifulSoup and Markdownify.
+
+Source code in `src/mkdocs_llmstxt/plugin.py`
+
+```python
+def __init__(self) -> None:  # noqa: D107
+    self.html_pages: dict[str, dict[str, str]] = defaultdict(dict)
+
+```
+
+### on_config
+
+```python
+on_config(config: MkDocsConfig) -> MkDocsConfig | None
+
+```
+
+Save the global MkDocs configuration.
+
+Hook for the [`on_config` event](https://www.mkdocs.org/user-guide/plugins/#on_config). In this hook, we save the global MkDocs configuration into an instance variable, to re-use it later.
+
+Parameters:
+
+- **`config`** (`MkDocsConfig`) – The MkDocs config object.
+
+Returns:
+
+- `MkDocsConfig | None` – The same, untouched config.
+
+Source code in `src/mkdocs_llmstxt/plugin.py`
+
+```python
+def on_config(self, config: MkDocsConfig) -> MkDocsConfig | None:
+    """Save the global MkDocs configuration.
+
+    Hook for the [`on_config` event](https://www.mkdocs.org/user-guide/plugins/#on_config).
+    In this hook, we save the global MkDocs configuration into an instance variable,
+    to re-use it later.
+
+    Arguments:
+        config: The MkDocs config object.
+
+    Returns:
+        The same, untouched config.
+    """
+    self.mkdocs_config = config
+    return config
+
+```
+
+### on_files
+
+```python
+on_files(
+    files: Files, *, config: MkDocsConfig
+) -> Files | None
+
+```
+
+Expand inputs for generated files.
+
+Hook for the [`on_files` event](https://www.mkdocs.org/user-guide/plugins/#on_files). In this hook we expand inputs for generated file (glob patterns using `*`).
+
+Parameters:
+
+- **`files`** (`Files`) – The collection of MkDocs files.
+- **`config`** (`MkDocsConfig`) – The MkDocs configuration.
+
+Returns:
+
+- `Files | None` – Modified collection or none.
+
+Source code in `src/mkdocs_llmstxt/plugin.py`
+
+```python
+def on_files(self, files: Files, *, config: MkDocsConfig) -> Files | None:  # noqa: ARG002
+    """Expand inputs for generated files.
+
+    Hook for the [`on_files` event](https://www.mkdocs.org/user-guide/plugins/#on_files).
+    In this hook we expand inputs for generated file (glob patterns using `*`).
+
+    Parameters:
+        files: The collection of MkDocs files.
+        config: The MkDocs configuration.
+
+    Returns:
+        Modified collection or none.
+    """
+    for file in self.config.files:
+        file["inputs"] = self._expand_inputs(file["inputs"], page_uris=list(files.src_uris.keys()))
+    return files
+
+```
+
+### on_page_content
+
+```python
+on_page_content(
+    html: str, *, page: Page, **kwargs: Any
+) -> str | None
+
+```
+
+Record pages contents.
+
+Hook for the [`on_page_content` event](https://www.mkdocs.org/user-guide/plugins/#on_page_content). In this hook we simply record the HTML of the pages into a dictionary whose keys are the pages' URIs.
+
+Parameters:
+
+- **`html`** (`str`) – The rendered HTML.
+- **`page`** (`Page`) – The page object.
+
+Source code in `src/mkdocs_llmstxt/plugin.py`
+
+```python
+def on_page_content(self, html: str, *, page: Page, **kwargs: Any) -> str | None:  # noqa: ARG002
+    """Record pages contents.
+
+    Hook for the [`on_page_content` event](https://www.mkdocs.org/user-guide/plugins/#on_page_content).
+    In this hook we simply record the HTML of the pages into a dictionary whose keys are the pages' URIs.
+
+    Parameters:
+        html: The rendered HTML.
+        page: The page object.
+    """
+    for file in self.config.files:
+        if page.file.src_uri in file["inputs"]:
+            logger.debug(f"Adding page {page.file.src_uri} to page {file['output']}")
+            self.html_pages[file["output"]][page.file.src_uri] = html
+    return html
+
+```
+
+### on_post_build
+
+```python
+on_post_build(config: MkDocsConfig, **kwargs: Any) -> None
+
+```
+
+Combine all recorded pages contents and convert it to a Markdown file with BeautifulSoup and Markdownify.
+
+Hook for the [`on_post_build` event](https://www.mkdocs.org/user-guide/plugins/#on_post_build). In this hook we concatenate all previously recorded HTML, and convert it to Markdown using Markdownify.
+
+Parameters:
+
+- **`config`** (`MkDocsConfig`) – MkDocs configuration.
+
+Source code in `src/mkdocs_llmstxt/plugin.py`
+
+```python
+def on_post_build(self, config: MkDocsConfig, **kwargs: Any) -> None:  # noqa: ARG002
+    """Combine all recorded pages contents and convert it to a Markdown file with BeautifulSoup and Markdownify.
+
+    Hook for the [`on_post_build` event](https://www.mkdocs.org/user-guide/plugins/#on_post_build).
+    In this hook we concatenate all previously recorded HTML, and convert it to Markdown using Markdownify.
+
+    Parameters:
+        config: MkDocs configuration.
+    """
+
+    def language_callback(tag: Tag) -> str:
+        for css_class in chain(tag.get("class", ()), tag.parent.get("class", ())):
+            if css_class.startswith("language-"):
+                return css_class[9:]
+        return ""
+
+    converter = MarkdownConverter(
+        bullets="-",
+        code_language_callback=language_callback,
+        escape_underscores=False,
+        heading_style=ATX,
+    )
+
+    for file in self.config.files:
+        try:
+            html = "\n\n".join(self.html_pages[file["output"]][input_page] for input_page in file["inputs"])
+        except KeyError as error:
+            raise PluginError(str(error)) from error
+
+        soup = Soup(html, "html.parser")
+        if self.config.autoclean:
+            autoclean(soup)
+        if self.config.preprocess:
+            preprocess(soup, self.config.preprocess, file["output"])
+
+        output_file = Path(config.site_dir).joinpath(file["output"])
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        markdown = mdformat.text(converter.convert_soup(soup), options={"wrap": "no"})
+        output_file.write_text(markdown, encoding="utf8")
+
+        logger.info(f"Generated file /{file['output']}")
+
+```
+
+# preprocess
+
+HTML pre-processing.
+
+Functions:
+
+- **`autoclean`** – Auto-clean the soup by removing elements.
+- **`preprocess`** – Pre-process HTML with user-defined functions.
+
+## autoclean
+
+```python
+autoclean(soup: BeautifulSoup) -> None
+
+```
+
+Auto-clean the soup by removing elements.
+
+Parameters:
+
+- **`soup`** (`BeautifulSoup`) – The soup to modify.
+
+Source code in `src/mkdocs_llmstxt/preprocess.py`
+
+```python
+def autoclean(soup: Soup) -> None:
+    """Auto-clean the soup by removing elements.
+
+    Parameters:
+        soup: The soup to modify.
+    """
+    # Remove unwanted elements.
+    for element in soup.find_all(_to_remove):
+        element.decompose()
+
+    # Unwrap autoref elements.
+    for element in soup.find_all("autoref"):
+        element.replace_with(NavigableString(element.get_text()))
+
+    # Unwrap mkdocstrings div.doc-md-description.
+    for element in soup.find_all("div", attrs={"class": "doc-md-description"}):
+        element.replace_with(NavigableString(element.get_text().strip()))
+
+    # Remove mkdocstrings labels.
+    for element in soup.find_all("span", attrs={"class": "doc-labels"}):
+        element.decompose()
+
+    # Remove line numbers from code blocks.
+    for element in soup.find_all("table", attrs={"class": "highlighttable"}):
+        element.replace_with(Soup(f"
+```
+
+{element.find('code').get_text()}
+
+```
+", "html.parser"))
+
+```
+
+## preprocess
+
+```python
+preprocess(
+    soup: BeautifulSoup, module_path: str, output: str
+) -> None
+
+```
+
+Pre-process HTML with user-defined functions.
+
+Parameters:
+
+- **`soup`** (`BeautifulSoup`) – The HTML (soup) to process before conversion to Markdown.
+- **`module_path`** (`str`) – The path of a Python module containing a preprocess function. The function must accept one and only one argument called soup. The soup argument is an instance of bs4.BeautifulSoup.
+- **`output`** (`str`) – The output path of the relevant Markdown file.
+
+Returns:
+
+- `None` – The processed HTML.
+
+Source code in `src/mkdocs_llmstxt/preprocess.py`
+
+```python
+def preprocess(soup: Soup, module_path: str, output: str) -> None:
+    """Pre-process HTML with user-defined functions.
+
+    Parameters:
+        soup: The HTML (soup) to process before conversion to Markdown.
+        module_path: The path of a Python module containing a `preprocess` function.
+            The function must accept one and only one argument called `soup`.
+            The `soup` argument is an instance of [`bs4.BeautifulSoup`][].
+        output: The output path of the relevant Markdown file.
+
+    Returns:
+        The processed HTML.
+    """
+    try:
+        module = _load_module(module_path)
+    except Exception as error:
+        raise PluginError(f"Could not load module: {error}") from error
+    try:
+        module.preprocess(soup, output)
+    except Exception as error:
+        raise PluginError(f"Could not pre-process HTML: {error}") from error
+
+```
