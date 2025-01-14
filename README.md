@@ -9,7 +9,7 @@ MkDocs plugin to generate an [/llms.txt file](https://llmstxt.org/).
 
 > /llms.txt - A proposal to standardise on using an /llms.txt file to provide information to help LLMs use a website at inference time. 
 
-See our own dynamically generated [/llms.txt](llms.txt) as a demonstration.
+See our own dynamically generated [/llms.txt](https://pawamoy.github.io/mkdocs-llmstxt/llms.txt) as a demonstration.
 
 ## Installation
 
