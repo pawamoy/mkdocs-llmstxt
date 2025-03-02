@@ -18,7 +18,7 @@ from mkdocs.plugins import BasePlugin
 
 from mkdocs_llmstxt._internal.config import _PluginConfig
 from mkdocs_llmstxt._internal.logger import _get_logger
-from mkdocs_llmstxt._internal.preprocess import autoclean, _preprocess
+from mkdocs_llmstxt._internal.preprocess import _preprocess, autoclean
 
 if TYPE_CHECKING:
     from typing import Any
