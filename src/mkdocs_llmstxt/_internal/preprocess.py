@@ -59,7 +59,7 @@ def _to_remove(tag: Tag) -> bool:
     if tag.name == "a" and tag.img and _to_remove(tag.img):
         return True
 
-    classes = tag.get("class", ())
+    classes = tag.get("class") or ()
 
     # Remove permalinks.
     if tag.name == "a" and "headerlink" in classes:
@@ -98,4 +98,4 @@ def autoclean(soup: Soup) -> None:
 
     # Remove line numbers from code blocks.
     for element in soup.find_all("table", attrs={"class": "highlighttable"}):
-        element.replace_with(Soup(f"<pre>{element.find('code').get_text()}</pre>", "html.parser"))
+        element.replace_with(Soup(f"<pre>{element.find('code').get_text()}</pre>", "html.parser"))  # type: ignore[union-attr]

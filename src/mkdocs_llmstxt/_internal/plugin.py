@@ -16,9 +16,9 @@ from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.exceptions import PluginError
 from mkdocs.plugins import BasePlugin
 
-from mkdocs_llmstxt.config import PluginConfig
-from mkdocs_llmstxt.logger import get_logger
-from mkdocs_llmstxt.preprocess import autoclean, preprocess
+from mkdocs_llmstxt._internal.config import PluginConfig
+from mkdocs_llmstxt._internal.logger import get_logger
+from mkdocs_llmstxt._internal.preprocess import autoclean, preprocess
 
 if TYPE_CHECKING:
     from typing import Any
@@ -45,7 +45,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[PluginConfig]):
 
     mkdocs_config: MkDocsConfig
 
-    def __init__(self) -> None:  # noqa: D107
+    def __init__(self) -> None:
         self.html_pages: dict[str, dict[str, str]] = defaultdict(dict)
 
     def _expand_inputs(self, inputs: list[str], page_uris: list[str]) -> list[str]:
@@ -117,7 +117,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[PluginConfig]):
         """
 
         def language_callback(tag: Tag) -> str:
-            for css_class in chain(tag.get("class", ()), tag.parent.get("class", ())):
+            for css_class in chain(tag.get("class") or (), (tag.parent.get("class") or ()) if tag.parent else ()):
                 if css_class.startswith("language-"):
                     return css_class[9:]
             return ""
