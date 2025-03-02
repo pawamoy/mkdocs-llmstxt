@@ -1,4 +1,4 @@
-"""Logging functions."""
+# Logging functions.
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
 
-class PluginLogger(logging.LoggerAdapter):
+class _PluginLogger(logging.LoggerAdapter):
     """A logger adapter to prefix messages with the originating package name."""
 
     def __init__(self, prefix: str, logger: logging.Logger):
@@ -35,7 +35,7 @@ class PluginLogger(logging.LoggerAdapter):
         return f"{self.prefix}: {msg}", kwargs
 
 
-def get_logger(name: str) -> PluginLogger:
+def _get_logger(name: str) -> _PluginLogger:
     """Return a logger for plugins.
 
     Arguments:
@@ -46,4 +46,4 @@ def get_logger(name: str) -> PluginLogger:
             prefixing each message with the plugin package name.
     """
     logger = logging.getLogger(f"mkdocs.plugins.{name}")
-    return PluginLogger(name.split(".", 1)[0], logger)
+    return _PluginLogger(name.split(".", 1)[0], logger)

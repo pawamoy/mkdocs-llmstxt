@@ -1,4 +1,4 @@
-"""HTML pre-processing."""
+# HTML pre-processing.
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def _load_module(module_path: str) -> ModuleType:
     raise RuntimeError("Spec or loader is null")
 
 
-def preprocess(soup: Soup, module_path: str, output: str) -> None:
+def _preprocess(soup: Soup, module_path: str, output: str) -> None:
     """Pre-process HTML with user-defined functions.
 
     Parameters:

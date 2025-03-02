@@ -77,4 +77,4 @@ def preprocess(soup: BeautifulSoup, output: str) -> None:
 
 The `output` argument lets you modify the soup *depending on which file is being generated*.
 
-Have a look at [our own pre-processing function](https://pawamoy.github.io/mkdocs-llmstxt/reference/mkdocs_llmstxt/preprocess/#mkdocs_llmstxt.preprocess.autoclean) to get inspiration.
+Have a look at [our own cleaning function](https://pawamoy.github.io/mkdocs-llmstxt/reference/mkdocs_llmstxt/#mkdocs_llmstxt.autoclean) to get inspiration.

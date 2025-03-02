@@ -1,4 +1,4 @@
-"""MkDocs plugin that generates a Markdown file at the end of the build."""
+# MkDocs plugin that generates a Markdown file at the end of the build.
 
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.exceptions import PluginError
 from mkdocs.plugins import BasePlugin
 
-from mkdocs_llmstxt._internal.config import PluginConfig
-from mkdocs_llmstxt._internal.logger import get_logger
-from mkdocs_llmstxt._internal.preprocess import autoclean, preprocess
+from mkdocs_llmstxt._internal.config import _PluginConfig
+from mkdocs_llmstxt._internal.logger import _get_logger
+from mkdocs_llmstxt._internal.preprocess import autoclean, _preprocess
 
 if TYPE_CHECKING:
     from typing import Any
@@ -28,10 +28,10 @@ if TYPE_CHECKING:
     from mkdocs.structure.pages import Page
 
 
-logger = get_logger(__name__)
+_logger = _get_logger(__name__)
 
 
-class MkdocsLLMsTxtPlugin(BasePlugin[PluginConfig]):
+class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
     """The MkDocs plugin to generate an `llms.txt` file.
 
     This plugin defines the following event hooks:
@@ -44,9 +44,11 @@ class MkdocsLLMsTxtPlugin(BasePlugin[PluginConfig]):
     """
 
     mkdocs_config: MkDocsConfig
+    """The global MkDocs configuration."""
 
     def __init__(self) -> None:
         self.html_pages: dict[str, dict[str, str]] = defaultdict(dict)
+        """Dictionary to store the HTML contents of pages."""
 
     def _expand_inputs(self, inputs: list[str], page_uris: list[str]) -> list[str]:
         expanded: list[str] = []
@@ -102,7 +104,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[PluginConfig]):
         """
         for file in self.config.files:
             if page.file.src_uri in file["inputs"]:
-                logger.debug(f"Adding page {page.file.src_uri} to page {file['output']}")
+                _logger.debug(f"Adding page {page.file.src_uri} to page {file['output']}")
                 self.html_pages[file["output"]][page.file.src_uri] = html
         return html
 
@@ -139,11 +141,11 @@ class MkdocsLLMsTxtPlugin(BasePlugin[PluginConfig]):
             if self.config.autoclean:
                 autoclean(soup)
             if self.config.preprocess:
-                preprocess(soup, self.config.preprocess, file["output"])
+                _preprocess(soup, self.config.preprocess, file["output"])
 
             output_file = Path(config.site_dir).joinpath(file["output"])
             output_file.parent.mkdir(parents=True, exist_ok=True)
             markdown = mdformat.text(converter.convert_soup(soup), options={"wrap": "no"})
             output_file.write_text(markdown, encoding="utf8")
 
-            logger.info(f"Generated file /{file['output']}")
+            _logger.info(f"Generated file /{file['output']}")
