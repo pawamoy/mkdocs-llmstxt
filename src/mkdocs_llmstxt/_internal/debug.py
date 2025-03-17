@@ -79,7 +79,10 @@ def _get_debug_info() -> _Environment:
     """
     py_name, py_version = _interpreter_name_version()
     packages = ["mkdocs-llmstxt"]
-    variables = ["PYTHONPATH", *[var for var in os.environ if var.startswith("MKDOCS_LLMSTXT")]]
+    variables = [
+        "PYTHONPATH",
+        *[var for var in os.environ if var.startswith("MKDOCS_LLMSTXT")],
+    ]
     return _Environment(
         interpreter_name=py_name,
         interpreter_version=py_version,
@@ -94,7 +97,9 @@ def _print_debug_info() -> None:
     """Print debug/environment information."""
     info = _get_debug_info()
     print(f"- __System__: {info.platform}")
-    print(f"- __Python__: {info.interpreter_name} {info.interpreter_version} ({info.interpreter_path})")
+    print(
+        f"- __Python__: {info.interpreter_name} {info.interpreter_version} ({info.interpreter_path})"
+    )
     print("- __Environment variables__:")
     for var in info.variables:
         print(f"  - `{var.name}`: `{var.value}`")
