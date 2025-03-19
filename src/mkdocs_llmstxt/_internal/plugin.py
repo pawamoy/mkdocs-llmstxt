@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 import fnmatch
-from urllib.parse import urljoin
 from collections import defaultdict
 from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, cast
+from urllib.parse import urljoin
 
 import mdformat
 from bs4 import BeautifulSoup as Soup
 from bs4 import Tag
 from markdownify import ATX, MarkdownConverter
-from mkdocs.structure.pages import Page
 from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.plugins import BasePlugin
+from mkdocs.structure.pages import Page
 
 from mkdocs_llmstxt._internal.config import _PluginConfig
 from mkdocs_llmstxt._internal.logger import _get_logger
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 _logger = _get_logger(__name__)
 
 
-class MDPageInfo(NamedTuple):
+class _MDPageInfo(NamedTuple):
     title: str
     path_md: Path
     md_url: str
@@ -55,7 +55,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
     """The global MkDocs configuration."""
 
     def __init__(self) -> None:
-        self.md_pages: defaultdict[str, list[MDPageInfo]] = defaultdict(list)
+        self.md_pages: defaultdict[str, list[_MDPageInfo]] = defaultdict(list)
         """Dictionary mapping section names to a list of page infos."""
 
     def _expand_inputs(self, inputs: list[str], page_uris: list[str]) -> list[str]:
@@ -81,9 +81,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             The same, untouched config.
         """
         if config.site_url is None:
-            raise ValueError(
-                "'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin"
-            )
+            raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
         self.mkdocs_config = config
         return config
 
@@ -103,9 +101,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         page_uris = list(files.src_uris)
 
         for section_name, file_list in list(self.config.sections.items()):
-            self.config.sections[section_name] = self._expand_inputs(
-                file_list, page_uris=page_uris
-            )
+            self.config.sections[section_name] = self._expand_inputs(file_list, page_uris=page_uris)
 
         return files
 
@@ -121,8 +117,11 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         for section_name, file_list in self.config.sections.items():
             if page.file.src_uri in file_list:
                 path_md = Path(page.file.abs_dest_path).with_suffix(".md")
-                page_md = generate_page_markdown(
-                    html, self.config.autoclean, self.config.preprocess
+                page_md = _generate_page_markdown(
+                    html,
+                    should_autoclean=self.config.autoclean,
+                    preprocess=self.config.preprocess,
+                    path=str(path_md),
                 )
 
                 md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
@@ -131,18 +130,18 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                     md_url = ""
 
                 # Guaranteed to exist as we require `site_url` to be configured:
-                base = cast(str, self.mkdocs_config.site_url)
-                if not base.endswith('/'):
-                    base += '/'
+                base = cast("str", self.mkdocs_config.site_url)
+                if not base.endswith("/"):
+                    base += "/"
                 md_url = urljoin(base, md_url)
 
                 self.md_pages[section_name].append(
-                    MDPageInfo(
+                    _MDPageInfo(
                         title=page.title if page.title is not None else page.file.src_uri,
                         path_md=path_md,
                         md_url=md_url,
                         content=page_md,
-                    )
+                    ),
                 )
 
         return html
@@ -155,7 +154,6 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         Parameters:
             config: MkDocs configuration.
         """
-
         output_file = Path(config.site_dir).joinpath("llms.txt")
         output_file.parent.mkdir(parents=True, exist_ok=True)
         markdown = f"# {config.site_name}\n\n"
@@ -169,8 +167,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         for section_name, file_list in self.md_pages.items():
             markdown += f"## {section_name}\n\n"
             for page_title, path_md, md_url, content in file_list:
-                _logger.debug(f"Generating MD file to {path_md}")
                 path_md.write_text(content, encoding="utf8")
+                _logger.debug(f"Generated MD file to {path_md}")
                 markdown += f"- [{page_title}]({md_url})\n"
 
         output_file.write_text(markdown, encoding="utf8")
@@ -178,9 +176,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
 
 
 def _language_callback(tag: Tag) -> str:
-    for css_class in chain(
-        tag.get("class") or (), (tag.parent.get("class") or ()) if tag.parent else ()
-    ):
+    for css_class in chain(tag.get("class") or (), (tag.parent.get("class") or ()) if tag.parent else ()):
         if css_class.startswith("language-"):
             return css_class[9:]
     return ""
@@ -194,8 +190,12 @@ _converter = MarkdownConverter(
 )
 
 
-def generate_page_markdown(
-    html: str, should_autoclean: bool, preprocess: str | None
+def _generate_page_markdown(
+    html: str,
+    *,
+    should_autoclean: bool,
+    preprocess: str | None,
+    path: str,
 ) -> str:
     """Convert HTML to Markdown.
 
@@ -203,13 +203,14 @@ def generate_page_markdown(
         html: The HTML content.
         should_autoclean: Whether to autoclean the HTML.
         preprocess: An optional path of a Python module containing a `preprocess` function.
+        path: The output path of the relevant Markdown file.
 
     Returns:
         The Markdown content.
     """
     soup = Soup(html, "html.parser")
-    if autoclean:
+    if should_autoclean:
         autoclean(soup)
     if preprocess:
-        _preprocess(soup, preprocess, "llms.txt")
+        _preprocess(soup, preprocess, path)
     return mdformat.text(_converter.convert_soup(soup), options={"wrap": "no"})

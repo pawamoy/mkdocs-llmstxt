@@ -22,30 +22,61 @@ pip install mkdocs-llmstxt
 Enable the plugin in `mkdocs.yml`:
 
 ```yaml title="mkdocs.yml"
+site_name: My project
+site_description: Description of my project
+site_url: https://myproject.com/  # Required for the llmstxt plugin to work
+
 plugins:
 - llmstxt:
-    files:
-    - output: llms.txt
-      inputs:
-      - file1.md
-      - folder/file2.md
+    markdown_description: Long description of my project
+    sections:
+      Usage documentation:
+        - file1.md
+        - file2.md
 ```
 
-You can generate several files, each from its own set of input files.
+The resulting `/llms.txt` file will be available at the root of your documentation.
+With the previous example, it will be accessible at https://myproject.com/llms.txt
+and will contain the following:
+
+```markdown
+# My project
+
+> Description of my project
+
+Long description of my project
+
+## Usage documentation
+
+- [File1 title](https://myproject.com/file1.md)
+- [File2 title](https://myproject.com/file2.md)
+```
+
+Each source file included in `sections` will have its own markdown file available at the specified URL
+in the `/llms.txt`. See [Markdown generation](#markdown-generation) for more details.
 
 File globbing is supported:
 
 ```yaml title="mkdocs.yml"
 plugins:
 - llmstxt:
-    files:
-    - output: llms.txt
-      inputs:
-      - file1.md
-      - reference/*/*.md
+    sections:
+      Usage documentation:
+        - index.md
+        - usage/*.md
 ```
 
-The plugin will concatenate the rendered HTML of these input pages, clean it up a bit (with [BeautifulSoup](https://pypi.org/project/beautifulsoup4/)), convert it back to Markdown (with [Markdownify](https://pypi.org/project/markdownify)), and format it (with [Mdformat](https://pypi.org/project/mdformat)). By concatenating HTML instead of Markdown, we ensure that dynamically generated contents (API documentation, executed code blocks, snippets from other files, Jinja macros, etc.) are part of the generated text files. Credits to [Petyo Ivanov](https://github.com/petyosi) for the original idea ✨
+## Markdown generation
+
+To generate a markdown page from a source file, the plugin will:
+
+- Cleanup the HTML output (with [BeautifulSoup](https://pypi.org/project/beautifulsoup4/))
+- Convert it back to Markdown (with [Markdownify](https://pypi.org/project/markdownify))
+
+Doing so is necessary to ensure that dynamically generated contents (API documentation, executed code blocks,
+snippets from other files, Jinja macros, etc.) are part of the generated text files.
+
+Credits to [Petyo Ivanov](https://github.com/petyosi) for the original idea ✨.
 
 You can disable auto-cleaning of the HTML:
 
