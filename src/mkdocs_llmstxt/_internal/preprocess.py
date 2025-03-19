@@ -98,6 +98,4 @@ def autoclean(soup: Soup) -> None:
 
     # Remove line numbers from code blocks.
     for element in soup.find_all("table", attrs={"class": "highlighttable"}):
-        element.replace_with(
-            Soup(f"<pre>{element.find('code').get_text()}</pre>", "html.parser")
-        )  # type: ignore[union-attr]
+        element.replace_with(Soup(f"<pre>{element.find('code').get_text()}</pre>", "html.parser"))  # type: ignore[union-attr]

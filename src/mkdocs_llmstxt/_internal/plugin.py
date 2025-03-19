@@ -56,8 +56,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
 
     def __init__(self) -> None:
         self.md_pages: defaultdict[str, list[MDPageInfo]] = defaultdict(list)
-        self.html_pages: dict[str, dict[str, str]] = defaultdict(dict)
-        """Dictionary to store the HTML contents of pages."""
+        """Dictionary mapping section names to a list of page infos."""
 
     def _expand_inputs(self, inputs: list[str], page_uris: list[str]) -> list[str]:
         expanded: list[str] = []
@@ -127,20 +126,19 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                 )
 
                 md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
+                # Apply the same logic as in the `Page.url` property:
                 if md_url in (".", "./"):
                     md_url = ""
-                md_url = urljoin(
-                    # Guaranteed to exist as we require 'site_url' to be configured:
-                    cast(str, self.mkdocs_config.site_url),
-                    md_url,
-                )
+
+                # Guaranteed to exist as we require `site_url` to be configured:
+                base = cast(str, self.mkdocs_config.site_url)
+                if not base.endswith('/'):
+                    base += '/'
+                md_url = urljoin(base, md_url)
 
                 self.md_pages[section_name].append(
                     MDPageInfo(
-                        title=cast(
-                            str,
-                            page.title if page.title is not None else page.file.src_uri,
-                        ),
+                        title=page.title if page.title is not None else page.file.src_uri,
                         path_md=path_md,
                         md_url=md_url,
                         content=page_md,
@@ -176,7 +174,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                 markdown += f"- [{page_title}]({md_url})\n"
 
         output_file.write_text(markdown, encoding="utf8")
-        _logger.info("Generated file / llms.txt")
+        _logger.debug("Generated file /llms.txt")
 
 
 def _language_callback(tag: Tag) -> str:
