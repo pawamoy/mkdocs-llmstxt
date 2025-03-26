@@ -12,4 +12,5 @@ class _PluginConfig(BaseConfig):
     autoclean = mkconf.Type(bool, default=True)
     preprocess = mkconf.Optional(mkconf.File(exists=True))
     markdown_description = mkconf.Optional(mkconf.Type(str))
+    full_output = mkconf.Optional(mkconf.Type(str))
     sections = mkconf.DictOfItems(mkconf.ListOfItems(mkconf.Type(str)))

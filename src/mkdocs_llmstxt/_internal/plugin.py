@@ -164,15 +164,25 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if self.config.markdown_description is not None:
             markdown += f"{self.config.markdown_description}\n\n"
 
+        full_markdown = markdown
+
         for section_name, file_list in self.md_pages.items():
             markdown += f"## {section_name}\n\n"
             for page_title, path_md, md_url, content in file_list:
                 path_md.write_text(content, encoding="utf8")
                 _logger.debug(f"Generated MD file to {path_md}")
                 markdown += f"- [{page_title}]({md_url})\n"
+            markdown += "\n"
 
         output_file.write_text(markdown, encoding="utf8")
         _logger.debug("Generated file /llms.txt")
+
+        if self.config.full_output is not None:
+            full_output_file = Path(config.site_dir).joinpath(self.config.full_output)
+            for section_name, file_list in self.md_pages.items():
+                full_markdown += f"# {section_name}\n\n{'\n'.join(info.content for info in file_list)}"
+            full_output_file.write_text(full_markdown, encoding="utf8")
+            _logger.debug(f"Generated file /{self.config.full_output}.txt")
 
 
 def _language_callback(tag: Tag) -> str:
