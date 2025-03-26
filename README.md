@@ -35,9 +35,7 @@ plugins:
         - file2.md
 ```
 
-The resulting `/llms.txt` file will be available at the root of your documentation.
-With the previous example, it will be accessible at https://myproject.com/llms.txt
-and will contain the following:
+The resulting `/llms.txt` file will be available at the root of your documentation. With the previous example, it will be accessible at https://myproject.com/llms.txt and will contain the following:
 
 ```markdown
 # My project
