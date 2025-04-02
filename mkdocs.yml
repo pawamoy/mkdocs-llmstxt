@@ -19,8 +19,7 @@ nav:
   - Changelog: changelog.md
   - Credits: credits.md
   - License: license.md
-# defer to gen-files + literate-nav
-- API reference: reference/
+- API reference: reference/api.md
 - Development:
   - Contributing: contributing.md
   - Code of Conduct: code_of_conduct.md
@@ -107,11 +106,6 @@ plugins:
 - autorefs
 - markdown-exec
 - section-index
-- gen-files:
-    scripts:
-    - scripts/gen_api_ref.py
-- literate-nav:
-    nav_file: SUMMARY.txt
 - coverage
 - mkdocstrings:
     handlers:
@@ -121,6 +115,7 @@ plugins:
         - https://www.crummy.com/software/BeautifulSoup/bs4/doc/objects.inv
         paths: [src]
         options:
+          backlinks: tree
           docstring_options:
             ignore_init_summary: true
           docstring_section_style: list

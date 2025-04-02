@@ -54,7 +54,7 @@ getter = "scripts.get_version:get_version"
 
 [tool.pdm.build]
 # Include as much as possible in the source distribution, to help redistributors.
-excludes = ["**/.pytest_cache"]
+excludes = ["**/.pytest_cache", "**/.mypy_cache"]
 source-includes = [
     "config",
     "docs",
@@ -98,14 +98,12 @@ ci = [
     "markdown-exec>=1.8",
     "mkdocs>=1.6",
     "mkdocs-coverage>=1.0",
-    "mkdocs-gen-files>=0.5",
     "mkdocs-git-revision-date-localized-plugin>=1.2",
-    "mkdocs-literate-nav>=0.6",
     "mkdocs-llmstxt>=0.1",
     "mkdocs-material>=9.5",
     "mkdocs-minify-plugin>=0.8",
     "mkdocs-section-index>=0.3",
-    "mkdocstrings[python]>=0.25",
+    "mkdocstrings[python]>=0.29",
     # YORE: EOL 3.10: Remove line.
     "tomli>=2.0; python_version < '3.11'",
 ]
