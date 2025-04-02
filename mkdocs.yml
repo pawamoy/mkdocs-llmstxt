@@ -133,11 +133,12 @@ plugins:
           signature_crossrefs: true
           summary: true
 - llmstxt:
-    files:
-    - output: llms-full.txt
-      inputs:
-      - index.md
-      - reference/**.md
+    full_output: llms-full.txt
+    markdown_description: This plugin automatically generates llms.txt files.
+    sections:
+      Usage documentation:
+        - index.md
+        - reference/*.md
 - git-revision-date-localized:
     enabled: !ENV [DEPLOY, false]
     enable_creation_date: true
