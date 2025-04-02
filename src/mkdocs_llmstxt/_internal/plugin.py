@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import fnmatch
-from collections import defaultdict
 from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, cast
@@ -54,9 +53,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
     mkdocs_config: MkDocsConfig
     """The global MkDocs configuration."""
 
-    def __init__(self) -> None:
-        self.md_pages: defaultdict[str, list[_MDPageInfo]] = defaultdict(list)
-        """Dictionary mapping section names to a list of page infos."""
+    md_pages: dict[str, list[_MDPageInfo]]
+    """Dictionary mapping section names to a list of page infos."""
 
     def _expand_inputs(self, inputs: list[str], page_uris: list[str]) -> list[str]:
         expanded: list[str] = []
@@ -83,6 +81,9 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if config.site_url is None:
             raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
         self.mkdocs_config = config
+        # A defaultdict could be used, but we need to retain the same order between `config.sections` and `md_pages`
+        # (which wouldn't be guaranteed when filling `md_pages` in `on_page_content()`):
+        self.md_pages = {section: [] for section in self.config.sections}
         return config
 
     def on_files(self, files: Files, *, config: MkDocsConfig) -> Files | None:  # noqa: ARG002
