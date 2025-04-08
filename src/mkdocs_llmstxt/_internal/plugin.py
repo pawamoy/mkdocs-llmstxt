@@ -181,7 +181,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if self.config.full_output is not None:
             full_output_file = Path(config.site_dir).joinpath(self.config.full_output)
             for section_name, file_list in self.md_pages.items():
-                full_markdown += f"# {section_name}\n\n{'\n'.join(info.content for info in file_list)}"
+                list_content = "\n".join(info.content for info in file_list)
+                full_markdown += f"# {section_name}\n\n{list_content}"
             full_output_file.write_text(full_markdown, encoding="utf8")
             _logger.debug(f"Generated file /{self.config.full_output}.txt")
 
