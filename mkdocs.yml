@@ -137,8 +137,9 @@ plugins:
     markdown_description: This plugin automatically generates llms.txt files.
     sections:
       Usage documentation:
-        - index.md
-        - reference/*.md
+      - index.md
+      API reference:
+      - reference/*.md
 - git-revision-date-localized:
     enabled: !ENV [DEPLOY, false]
     enable_creation_date: true

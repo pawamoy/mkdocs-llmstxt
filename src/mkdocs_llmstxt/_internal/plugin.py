@@ -81,8 +81,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if config.site_url is None:
             raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
         self.mkdocs_config = config
-        # A defaultdict could be used, but we need to retain the same order between `config.sections` and `md_pages`
-        # (which wouldn't be guaranteed when filling `md_pages` in `on_page_content()`):
+        # A `defaultdict` could be used, but we need to retain the same order between `config.sections` and `md_pages`
+        # (which wouldn't be guaranteed when filling `md_pages` in `on_page_content()`).
         self.md_pages = {section: [] for section in self.config.sections}
         return config
 
@@ -126,11 +126,11 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                 )
 
                 md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
-                # Apply the same logic as in the `Page.url` property:
+                # Apply the same logic as in the `Page.url` property.
                 if md_url in (".", "./"):
                     md_url = ""
 
-                # Guaranteed to exist as we require `site_url` to be configured:
+                # Guaranteed to exist as we require `site_url` to be configured.
                 base = cast("str", self.mkdocs_config.site_url)
                 if not base.endswith("/"):
                     base += "/"

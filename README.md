@@ -23,16 +23,16 @@ Enable the plugin in `mkdocs.yml`:
 
 ```yaml title="mkdocs.yml"
 site_name: My project
-site_description: Description of my project
-site_url: https://myproject.com/  # Required for the llmstxt plugin to work
+site_description: Description of my project.
+site_url: https://myproject.com/  # Required for the llmstxt plugin to work.
 
 plugins:
 - llmstxt:
-    markdown_description: Long description of my project
+    markdown_description: Long description of my project.
     sections:
       Usage documentation:
-        - file1.md
-        - file2.md
+      - file1.md
+      - file2.md
 ```
 
 The resulting `/llms.txt` file will be available at the root of your documentation. With the previous example, it will be accessible at https://myproject.com/llms.txt and will contain the following:
@@ -40,9 +40,9 @@ The resulting `/llms.txt` file will be available at the root of your documentati
 ```markdown
 # My project
 
-> Description of my project
+> Description of my project.
 
-Long description of my project
+Long description of my project.
 
 ## Usage documentation
 
@@ -50,8 +50,7 @@ Long description of my project
 - [File2 title](https://myproject.com/file2.md)
 ```
 
-Each source file included in `sections` will have its own markdown file available at the specified URL
-in the `/llms.txt`. See [Markdown generation](#markdown-generation) for more details.
+Each source file included in `sections` will have its own Markdown file available at the specified URL in the `/llms.txt`. See [Markdown generation](#markdown-generation) for more details.
 
 File globbing is supported:
 
@@ -60,8 +59,8 @@ plugins:
 - llmstxt:
     sections:
       Usage documentation:
-        - index.md
-        - usage/*.md
+      - index.md
+      - usage/*.md
 ```
 
 ## Full output
@@ -74,19 +73,18 @@ plugins:
     full_output: llms-full.txt
     sections:
       Usage documentation:
-        - index.md
-        - usage/*.md
+      - index.md
+      - usage/*.md
 ```
 
 ## Markdown generation
 
-To generate a markdown page from a source file, the plugin will:
+To generate a Markdown page from a source file, the plugin will:
 
 - Cleanup the HTML output (with [BeautifulSoup](https://pypi.org/project/beautifulsoup4/))
 - Convert it back to Markdown (with [Markdownify](https://pypi.org/project/markdownify))
 
-Doing so is necessary to ensure that dynamically generated contents (API documentation, executed code blocks,
-snippets from other files, Jinja macros, etc.) are part of the generated text files.
+Doing so is necessary to ensure that dynamically generated contents (API documentation, executed code blocks, snippets from other files, Jinja macros, etc.) are part of the generated text files.
 
 Credits to [Petyo Ivanov](https://github.com/petyosi) for the original idea ✨.
 
