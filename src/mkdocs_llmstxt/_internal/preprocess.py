@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import sys
 from importlib.util import module_from_spec, spec_from_file_location
 from typing import TYPE_CHECKING
@@ -98,4 +99,4 @@ def autoclean(soup: Soup) -> None:
 
     # Remove line numbers from code blocks.
     for element in soup.find_all("table", attrs={"class": "highlighttable"}):
-        element.replace_with(Soup(f"<pre>{element.find('code').get_text()}</pre>", "html.parser"))  # type: ignore[union-attr]
+        element.replace_with(Soup(f"<pre>{html.escape(element.find('code').get_text())}</pre>", "html.parser"))  # type: ignore[union-attr]

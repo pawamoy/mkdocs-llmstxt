@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import fnmatch
-from collections import defaultdict
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple, cast
+from urllib.parse import urljoin
 
 import mdformat
 from bs4 import BeautifulSoup as Soup
 from bs4 import Tag
 from markdownify import ATX, MarkdownConverter
 from mkdocs.config.defaults import MkDocsConfig
-from mkdocs.exceptions import PluginError
 from mkdocs.plugins import BasePlugin
+from mkdocs.structure.pages import Page
 
 from mkdocs_llmstxt._internal.config import _PluginConfig
 from mkdocs_llmstxt._internal.logger import _get_logger
@@ -29,6 +29,13 @@ if TYPE_CHECKING:
 
 
 _logger = _get_logger(__name__)
+
+
+class _MDPageInfo(NamedTuple):
+    title: str
+    path_md: Path
+    md_url: str
+    content: str
 
 
 class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
@@ -46,9 +53,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
     mkdocs_config: MkDocsConfig
     """The global MkDocs configuration."""
 
-    def __init__(self) -> None:
-        self.html_pages: dict[str, dict[str, str]] = defaultdict(dict)
-        """Dictionary to store the HTML contents of pages."""
+    md_pages: dict[str, list[_MDPageInfo]]
+    """Dictionary mapping section names to a list of page infos."""
 
     def _expand_inputs(self, inputs: list[str], page_uris: list[str]) -> list[str]:
         expanded: list[str] = []
@@ -72,7 +78,12 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         Returns:
             The same, untouched config.
         """
+        if config.site_url is None:
+            raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
         self.mkdocs_config = config
+        # A `defaultdict` could be used, but we need to retain the same order between `config.sections` and `md_pages`
+        # (which wouldn't be guaranteed when filling `md_pages` in `on_page_content()`).
+        self.md_pages = {section: [] for section in self.config.sections}
         return config
 
     def on_files(self, files: Files, *, config: MkDocsConfig) -> Files | None:  # noqa: ARG002
@@ -88,64 +99,130 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         Returns:
             Modified collection or none.
         """
-        for file in self.config.files:
-            file["inputs"] = self._expand_inputs(file["inputs"], page_uris=list(files.src_uris.keys()))
+        page_uris = list(files.src_uris)
+
+        for section_name, file_list in list(self.config.sections.items()):
+            self.config.sections[section_name] = self._expand_inputs(file_list, page_uris=page_uris)
+
         return files
 
     def on_page_content(self, html: str, *, page: Page, **kwargs: Any) -> str | None:  # noqa: ARG002
-        """Record pages contents.
+        """Convert page content into a Markdown file and save the result to be processed in the `on_post_build` hook.
 
         Hook for the [`on_page_content` event](https://www.mkdocs.org/user-guide/plugins/#on_page_content).
-        In this hook we simply record the HTML of the pages into a dictionary whose keys are the pages' URIs.
 
         Parameters:
             html: The rendered HTML.
             page: The page object.
         """
-        for file in self.config.files:
-            if page.file.src_uri in file["inputs"]:
-                _logger.debug(f"Adding page {page.file.src_uri} to page {file['output']}")
-                self.html_pages[file["output"]][page.file.src_uri] = html
+        for section_name, file_list in self.config.sections.items():
+            if page.file.src_uri in file_list:
+                path_md = Path(page.file.abs_dest_path).with_suffix(".md")
+                page_md = _generate_page_markdown(
+                    html,
+                    should_autoclean=self.config.autoclean,
+                    preprocess=self.config.preprocess,
+                    path=str(path_md),
+                )
+
+                md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
+                # Apply the same logic as in the `Page.url` property.
+                if md_url in (".", "./"):
+                    md_url = ""
+
+                # Guaranteed to exist as we require `site_url` to be configured.
+                base = cast("str", self.mkdocs_config.site_url)
+                if not base.endswith("/"):
+                    base += "/"
+                md_url = urljoin(base, md_url)
+
+                self.md_pages[section_name].append(
+                    _MDPageInfo(
+                        title=page.title if page.title is not None else page.file.src_uri,
+                        path_md=path_md,
+                        md_url=md_url,
+                        content=page_md,
+                    ),
+                )
+
         return html
 
-    def on_post_build(self, config: MkDocsConfig, **kwargs: Any) -> None:  # noqa: ARG002
-        """Combine all recorded pages contents and convert it to a Markdown file with BeautifulSoup and Markdownify.
+    def on_post_build(self, *, config: MkDocsConfig, **kwargs: Any) -> None:  # noqa: ARG002
+        """Create the final `llms.txt` file and the MD files for all selected pages.
 
         Hook for the [`on_post_build` event](https://www.mkdocs.org/user-guide/plugins/#on_post_build).
-        In this hook we concatenate all previously recorded HTML, and convert it to Markdown using Markdownify.
 
         Parameters:
             config: MkDocs configuration.
         """
+        output_file = Path(config.site_dir).joinpath("llms.txt")
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        markdown = f"# {config.site_name}\n\n"
 
-        def language_callback(tag: Tag) -> str:
-            for css_class in chain(tag.get("class") or (), (tag.parent.get("class") or ()) if tag.parent else ()):
-                if css_class.startswith("language-"):
-                    return css_class[9:]
-            return ""
+        if config.site_description is not None:
+            markdown += f"> {config.site_description}\n\n"
 
-        converter = MarkdownConverter(
-            bullets="-",
-            code_language_callback=language_callback,
-            escape_underscores=False,
-            heading_style=ATX,
-        )
+        if self.config.markdown_description is not None:
+            markdown += f"{self.config.markdown_description}\n\n"
 
-        for file in self.config.files:
-            try:
-                html = "\n\n".join(self.html_pages[file["output"]][input_page] for input_page in file["inputs"])
-            except KeyError as error:
-                raise PluginError(str(error)) from error
+        full_markdown = markdown
 
-            soup = Soup(html, "html.parser")
-            if self.config.autoclean:
-                autoclean(soup)
-            if self.config.preprocess:
-                _preprocess(soup, self.config.preprocess, file["output"])
+        for section_name, file_list in self.md_pages.items():
+            markdown += f"## {section_name}\n\n"
+            for page_title, path_md, md_url, content in file_list:
+                path_md.write_text(content, encoding="utf8")
+                _logger.debug(f"Generated MD file to {path_md}")
+                markdown += f"- [{page_title}]({md_url})\n"
+            markdown += "\n"
 
-            output_file = Path(config.site_dir).joinpath(file["output"])
-            output_file.parent.mkdir(parents=True, exist_ok=True)
-            markdown = mdformat.text(converter.convert_soup(soup), options={"wrap": "no"})
-            output_file.write_text(markdown, encoding="utf8")
+        output_file.write_text(markdown, encoding="utf8")
+        _logger.debug("Generated file /llms.txt")
 
-            _logger.info(f"Generated file /{file['output']}")
+        if self.config.full_output is not None:
+            full_output_file = Path(config.site_dir).joinpath(self.config.full_output)
+            for section_name, file_list in self.md_pages.items():
+                list_content = "\n".join(info.content for info in file_list)
+                full_markdown += f"# {section_name}\n\n{list_content}"
+            full_output_file.write_text(full_markdown, encoding="utf8")
+            _logger.debug(f"Generated file /{self.config.full_output}.txt")
+
+
+def _language_callback(tag: Tag) -> str:
+    for css_class in chain(tag.get("class") or (), (tag.parent.get("class") or ()) if tag.parent else ()):
+        if css_class.startswith("language-"):
+            return css_class[9:]
+    return ""
+
+
+_converter = MarkdownConverter(
+    bullets="-",
+    code_language_callback=_language_callback,
+    escape_underscores=False,
+    heading_style=ATX,
+)
+
+
+def _generate_page_markdown(
+    html: str,
+    *,
+    should_autoclean: bool,
+    preprocess: str | None,
+    path: str,
+) -> str:
+    """Convert HTML to Markdown.
+
+    Parameters:
+        html: The HTML content.
+        should_autoclean: Whether to autoclean the HTML.
+        preprocess: An optional path of a Python module containing a `preprocess` function.
+        path: The output path of the relevant Markdown file.
+
+    Returns:
+        The Markdown content.
+    """
+    soup = Soup(html, "html.parser")
+    if should_autoclean:
+        autoclean(soup)
+    if preprocess:
+        _preprocess(soup, preprocess, path)
+    return mdformat.text(_converter.convert_soup(soup), options={"wrap": "no"})
