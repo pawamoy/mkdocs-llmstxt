@@ -48,15 +48,20 @@
   gap: .2rem;
   white-space: nowrap;
   align-items: center;
+  vertical-align: middle;
 }
 .doc-backlink-crumb:not(:first-child)::before {
   background-color: var(--md-default-fg-color--lighter);
   content: "";
   display: inline;
   height: 1rem;
+  --md-path-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>');
   -webkit-mask-image: var(--md-path-icon);
   mask-image: var(--md-path-icon);
   width: 1rem;
+}
+.doc-backlink-crumb.last {
+  font-weight: bold;
 }
 
 /* Symbols in Navigation and ToC. */
