@@ -105,3 +105,45 @@ def test_mixed_descriptions() -> None:
     # Verify descriptions
     descriptions = [info.description for info in plugin.md_pages["Test Section"]]
     assert descriptions == ["Description of page 1", None, "Description of page 3"]
+
+def test_no_descriptions() -> None:
+    """Test that no descriptions are included when no descriptions are provided."""
+    # Create a mock config
+    config = MkDocsConfig()
+    config.site_name = "Test Project"
+    config.site_url = "https://test.com/"
+
+    # Create plugin instance with test configuration
+    plugin = MkdocsLLMsTxtPlugin()
+    plugin.load_config({
+        "sections": {
+            "Test Section": [
+                "page1.md",
+                "page2.md"
+            ]
+        }
+    })
+
+    # Initialize plugin
+    plugin.on_config(config)
+
+    # Create and process mock pages
+    for page_num in range(1, 3):
+        file = SimpleNamespace(
+            src_uri=f"page{page_num}.md",
+            dest_uri=f"page{page_num}.html",
+            abs_dest_path=f"/tmp/page{page_num}.html",
+            url=f"page{page_num}.html"
+        )
+        page = Page(
+            title=f"Test Page {page_num}",
+            file=file,
+            config=config
+        )
+        plugin.on_page_content("<html><body>Test content</body></html>", page=page)
+    
+    # Check that all pages were processed
+    assert len(plugin.md_pages["Test Section"]) == 2
+
+    descriptions = [info.description for info in plugin.md_pages["Test Section"]]
+    assert descriptions == [None, None]
