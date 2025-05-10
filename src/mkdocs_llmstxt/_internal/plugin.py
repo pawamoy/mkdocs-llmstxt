@@ -36,6 +36,7 @@ class _MDPageInfo(NamedTuple):
     path_md: Path
     md_url: str
     content: str
+    description: str | None = None
 
 
 class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
@@ -136,12 +137,18 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                     base += "/"
                 md_url = urljoin(base, md_url)
 
+                # Get description if available in the config
+                description = None
+                if isinstance(file_list, dict) and page.file.src_uri in file_list:
+                    description = file_list[page.file.src_uri]
+
                 self.md_pages[section_name].append(
                     _MDPageInfo(
                         title=page.title if page.title is not None else page.file.src_uri,
                         path_md=path_md,
                         md_url=md_url,
                         content=page_md,
+                        description=description,
                     ),
                 )
 
@@ -169,10 +176,13 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
 
         for section_name, file_list in self.md_pages.items():
             markdown += f"## {section_name}\n\n"
-            for page_title, path_md, md_url, content in file_list:
-                path_md.write_text(content, encoding="utf8")
-                _logger.debug(f"Generated MD file to {path_md}")
-                markdown += f"- [{page_title}]({md_url})\n"
+            for page_info in file_list:
+                page_info.path_md.write_text(page_info.content, encoding="utf8")
+                _logger.debug(f"Generated MD file to {page_info.path_md}")
+                if page_info.description:
+                    markdown += f"- [{page_info.title}]({page_info.md_url}): {page_info.description}\n"
+                else:
+                    markdown += f"- [{page_info.title}]({page_info.md_url})\n"
             markdown += "\n"
 
         output_file.write_text(markdown, encoding="utf8")

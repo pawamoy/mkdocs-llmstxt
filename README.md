@@ -31,8 +31,8 @@ plugins:
     markdown_description: Long description of my project.
     sections:
       Usage documentation:
-      - file1.md
-      - file2.md
+        file1.md: Description of file1
+        file2.md: Description of file2
 ```
 
 The resulting `/llms.txt` file will be available at the root of your documentation. With the previous example, it will be accessible at https://myproject.com/llms.txt and will contain the following:
@@ -46,21 +46,22 @@ Long description of my project.
 
 ## Usage documentation
 
-- [File1 title](https://myproject.com/file1.md)
-- [File2 title](https://myproject.com/file2.md)
+- [File1 title](https://myproject.com/file1.md): Description of file1
+- [File2 title](https://myproject.com/file2.md): Description of file2
 ```
 
 Each source file included in `sections` will have its own Markdown file available at the specified URL in the `/llms.txt`. See [Markdown generation](#markdown-generation) for more details.
 
-File globbing is supported:
+File globbing is supported, and you can mix files with and without descriptions:
 
 ```yaml title="mkdocs.yml"
 plugins:
 - llmstxt:
     sections:
       Usage documentation:
-      - index.md
-      - usage/*.md
+        index.md: Main documentation page
+        usage/*.md  # Files without descriptions
+        api.md: API reference documentation
 ```
 
 ## Full output
