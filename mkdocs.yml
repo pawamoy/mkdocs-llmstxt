@@ -139,7 +139,7 @@ plugins:
       Usage documentation:
       - index.md
       API reference:
-      - reference/*.md
+      - reference/api.md
 - git-revision-date-localized:
     enabled: !ENV [DEPLOY, false]
     enable_creation_date: true
