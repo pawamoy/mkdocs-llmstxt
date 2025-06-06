@@ -132,6 +132,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
 
                 # Guaranteed to exist as we require `site_url` to be configured.
                 base = cast("str", self.mkdocs_config.site_url)
+                if self.config.prefix_url_base_url:
+                    base = cast("str", self.config.prefix_url_base_url)
                 if not base.endswith("/"):
                     base += "/"
                 md_url = urljoin(base, md_url)
@@ -165,7 +167,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if self.config.markdown_description is not None:
             markdown += f"{self.config.markdown_description}\n\n"
 
-        full_markdown = markdown
+        full_markdown = [markdown]
 
         for section_name, file_list in self.md_pages.items():
             markdown += f"## {section_name}\n\n"
@@ -181,9 +183,36 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if self.config.full_output is not None:
             full_output_file = Path(config.site_dir).joinpath(self.config.full_output)
             for section_name, file_list in self.md_pages.items():
-                list_content = "\n".join(info.content for info in file_list)
-                full_markdown += f"# {section_name}\n\n{list_content}"
-            full_output_file.write_text(full_markdown, encoding="utf8")
+                section_parts = []
+                section_content = []
+
+                if self.config.include_section_content_in_full_output:
+                    section_parts = [f"# {section_name}"]
+
+                # Process each file in the section
+                for info in file_list:
+                    if self.config.prefix_url_per_page:
+                        section_content.append(f"URL FOR THIS PAGE: {info.md_url}")
+                    section_content.append(info.content)
+                    if self.config.use_section_pages_separator:
+                        section_content.append(f"\n{self.config.use_section_pages_separator}\n")
+
+                # Join all section content and add to section parts
+                section_parts.append("\n".join(section_content))
+
+                # Add the section parts to the full markdown (joined by newlines)
+                full_markdown.append("\n\n".join(section_parts))
+
+            section_separator = ""
+            # If section content is included - use section separator, otherwise - page separator
+            # (as there are no sections)
+            if self.config.include_section_content_in_full_output:
+                if self.config.use_section_separator is not None:
+                    section_separator = f"\n{self.config.use_section_separator}\n"
+            elif self.config.use_section_pages_separator:
+                section_separator = f"\n{self.config.use_section_pages_separator}\n"
+            full_markdown_as_string = section_separator.join(full_markdown)
+            full_output_file.write_text(full_markdown_as_string, encoding="utf8")
             _logger.debug(f"Generated file /{self.config.full_output}.txt")
 
 
