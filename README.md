@@ -124,8 +124,8 @@ Have a look at [our own cleaning function](https://pawamoy.github.io/mkdocs-llms
 
 You can fine-tune the output of the `llms-full.txt` file by setting the following configuration options:
 
-- `prefix_url_per_page` - If set to `true`, the URL of each page will be prefixed to the content of the page in the `llms-full.txt` file. Can be useful to provide context to the LLM. 
-- `use_section_separator` - Can be set to the string that should be used to separate sections in the `llms-full.txt` file. Is wrapped with `\n` on both sides (if not empty).
-- `use_section_pages_separator` - Can be set to the string that should be used to separate pages in a section in the `llms-full.txt` file. Is wrapped with `\n` on both sides (if not empty).
-- `prefix_url_base_url` - Can be set to the URL that has to be used as a base URL for llms-full.txt URL building. If not set, the `site_url` will be used.
-- `include_section_content_in_full_output` - Can be set to `false` to not include the section content in the `llms-full.txt` file. This can be useful if you want to keep the file size small and only include the page content. Defaults to `true`.
+- `prefix_url_per_page` - (Optional)  If set to `true`, the URL of each page will be prefixed to the content of the page in the `llms-full.txt` file. Can be useful to provide context to the LLM. 
+- `use_section_separator` - (Optional) Can be set to the string that should be used to separate sections in the `llms-full.txt` file. Is wrapped with `\n` on both sides (if not empty).
+- `use_section_pages_separator` - (Optional)  Can be set to the string that should be used to separate pages in a section in the `llms-full.txt` file. Is wrapped with `\n` on both sides (if not empty).
+- `prefix_url_base_url` - (Optional)  Can be set to the URL that has to be used as a base URL for llms-full.txt URL building. If not set, the `site_url` will be used.
+- `include_section_content_in_full_output` - (Optional) Can be set to `false` to not include the section content in the `llms-full.txt` file. This can be useful if you want to keep the file size small and only include the page content. Defaults to `true`.
