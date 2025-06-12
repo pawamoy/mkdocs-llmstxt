@@ -111,7 +111,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                     ordered_files.append(item)
                     descriptions[item] = None
 
-            # Replace the original list with the list of file paths only
+            # Replace the original list with the list of file paths only. This simplifies further processing
+            # (expansion of glob patterns, membership checks, etc.).
             self.config.sections[section_name] = ordered_files  # type: ignore[arg-type]
             self._file_descriptions[section_name] = descriptions
 
@@ -167,11 +168,17 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                     base += "/"
                 md_url = urljoin(base, md_url)
 
-                # Retrieve an optional description
+                # Retrieve an optional description, handling both exact matches and glob patterns.
                 description = None
                 desc_map = self._file_descriptions.get(section_name, {})
+                # First try exact match, then fallback to glob-pattern checks.
                 if page.file.src_uri in desc_map:
                     description = desc_map[page.file.src_uri]
+                else:
+                    for pattern, desc in desc_map.items():
+                        if fnmatch.fnmatch(page.file.src_uri, pattern):
+                            description = desc
+                            break
 
                 self.md_pages[section_name].append(
                     _MDPageInfo(
