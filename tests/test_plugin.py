@@ -29,10 +29,10 @@ def test_page_descriptions() -> None:
     plugin = MkdocsLLMsTxtPlugin()
     plugin.load_config({
         "sections": {
-            "Test Section": {
-                "page1.md": "Description of page 1",
-                "page2.md": "Description of page 2"
-            }
+            "Test Section": [
+                {"page1.md": "Description of page 1"},
+                {"page2.md": "Description of page 2"},
+            ]
         }
     })
     
@@ -73,11 +73,11 @@ def test_mixed_descriptions() -> None:
     plugin = MkdocsLLMsTxtPlugin()
     plugin.load_config({
         "sections": {
-            "Test Section": {
-                "page1.md": "Description of page 1",
-                "page2.md": None,
-                "page3.md": "Description of page 3"
-            }
+            "Test Section": [
+                {"page1.md": "Description of page 1"},
+                "page2.md",
+                {"page3.md": "Description of page 3"},
+            ]
         }
     })
     
@@ -119,7 +119,7 @@ def test_no_descriptions() -> None:
         "sections": {
             "Test Section": [
                 "page1.md",
-                "page2.md"
+                "page2.md",
             ]
         }
     })
