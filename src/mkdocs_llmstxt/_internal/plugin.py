@@ -36,7 +36,7 @@ class _MDPageInfo(NamedTuple):
     path_md: Path
     md_url: str
     content: str
-    description: str | None = None
+    description: str
 
 
 class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
@@ -57,17 +57,21 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
     md_pages: dict[str, list[_MDPageInfo]]
     """Dictionary mapping section names to a list of page infos."""
 
-    # Mapping section -> {file_pattern -> description}
-    _file_descriptions: dict[str, dict[str, str | None]]
-    """Internal cache of descriptions for each file (glob patterns allowed)."""
+    _sections: dict[str, dict[str, str]]
 
-    def _expand_inputs(self, inputs: list[str], page_uris: list[str]) -> list[str]:
-        expanded: list[str] = []
-        for input_file in inputs:
-            if "*" in input_file:
-                expanded.extend(fnmatch.filter(page_uris, input_file))
+    def _expand_inputs(self, inputs: list[str | dict[str, str]], page_uris: list[str]) -> dict[str, str]:
+        expanded: dict[str, str] = {}
+        for input_item in inputs:
+            if isinstance(input_item, dict):
+                input_file, description = next(iter(input_item.items()))
             else:
-                expanded.append(input_file)
+                input_file = input_item
+                description = ""
+            if "*" in input_file:
+                for match in fnmatch.filter(page_uris, input_file):
+                    expanded[match] = description
+            else:
+                expanded[input_file] = description
         return expanded
 
     def on_config(self, config: MkDocsConfig) -> MkDocsConfig | None:
@@ -86,36 +90,10 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if config.site_url is None:
             raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
         self.mkdocs_config = config
-        
-        # Prepare containers while also extracting descriptions from the user configuration.
+
+        # A `defaultdict` could be used, but we need to retain the same order between `config.sections` and `md_pages`
+        # (which wouldn't be guaranteed when filling `md_pages` in `on_page_content()`).
         self.md_pages = {section: [] for section in self.config.sections}
-
-        # Extract optional descriptions while keeping the order provided by the user.
-        self._file_descriptions = {}
-        for section_name, items in self.config.sections.items():
-            ordered_files: list[str] = []
-            descriptions: dict[str, str | None] = {}
-
-            for item in items:
-                if isinstance(item, dict):
-                    # Expecting a mapping with a single key/value.
-                    if len(item) != 1:
-                        raise ValueError(
-                            f"Each mapping item in 'sections' must contain exactly one key/value pair: '{section_name}: {item}'",
-                        )
-                    file_path, description = next(iter(item.items()))
-                    ordered_files.append(file_path)
-                    descriptions[file_path] = description
-                else:
-                    # Simple string entry.
-                    ordered_files.append(item)
-                    descriptions[item] = None
-
-            # Replace the original list with the list of file paths only. This simplifies further processing
-            # (expansion of glob patterns, membership checks, etc.).
-            self.config.sections[section_name] = ordered_files  # type: ignore[arg-type]
-            self._file_descriptions[section_name] = descriptions
-
         return config
 
     def on_files(self, files: Files, *, config: MkDocsConfig) -> Files | None:  # noqa: ARG002
@@ -132,10 +110,10 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             Modified collection or none.
         """
         page_uris = list(files.src_uris)
-
-        for section_name, file_list in list(self.config.sections.items()):
-            self.config.sections[section_name] = self._expand_inputs(file_list, page_uris=page_uris)
-
+        self._sections = {
+            section_name: self._expand_inputs(file_list, page_uris=page_uris)  # type: ignore[arg-type]
+            for section_name, file_list in self.config.sections.items()
+        }
         return files
 
     def on_page_content(self, html: str, *, page: Page, **kwargs: Any) -> str | None:  # noqa: ARG002
@@ -147,8 +125,9 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             html: The rendered HTML.
             page: The page object.
         """
-        for section_name, file_list in self.config.sections.items():
-            if page.file.src_uri in file_list:
+        src_uri = page.file.src_uri
+        for section_name, files in self._sections.items():
+            if src_uri in files:
                 path_md = Path(page.file.abs_dest_path).with_suffix(".md")
                 page_md = _generate_page_markdown(
                     html,
@@ -168,25 +147,13 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                     base += "/"
                 md_url = urljoin(base, md_url)
 
-                # Retrieve an optional description, handling both exact matches and glob patterns.
-                description = None
-                desc_map = self._file_descriptions.get(section_name, {})
-                # First try exact match, then fallback to glob-pattern checks.
-                if page.file.src_uri in desc_map:
-                    description = desc_map[page.file.src_uri]
-                else:
-                    for pattern, desc in desc_map.items():
-                        if fnmatch.fnmatch(page.file.src_uri, pattern):
-                            description = desc
-                            break
-
                 self.md_pages[section_name].append(
                     _MDPageInfo(
-                        title=page.title if page.title is not None else page.file.src_uri,
+                        title=page.title if page.title is not None else src_uri,
                         path_md=path_md,
                         md_url=md_url,
                         content=page_md,
-                        description=description,
+                        description=files[src_uri],
                     ),
                 )
 
@@ -214,13 +181,10 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
 
         for section_name, file_list in self.md_pages.items():
             markdown += f"## {section_name}\n\n"
-            for page_info in file_list:
-                page_info.path_md.write_text(page_info.content, encoding="utf8")
-                _logger.debug(f"Generated MD file to {page_info.path_md}")
-                if page_info.description:
-                    markdown += f"- [{page_info.title}]({page_info.md_url}): {page_info.description}\n"
-                else:
-                    markdown += f"- [{page_info.title}]({page_info.md_url})\n"
+            for page_title, path_md, md_url, content, desc in file_list:
+                path_md.write_text(content, encoding="utf8")
+                _logger.debug(f"Generated MD file to {path_md}")
+                markdown += f"- [{page_title}]({md_url}){(': ' + desc) if desc else ''}\n"
             markdown += "\n"
 
         output_file.write_text(markdown, encoding="utf8")

@@ -15,10 +15,10 @@ class _PluginConfig(BaseConfig):
     full_output = mkconf.Optional(mkconf.Type(str))
     sections = mkconf.DictOfItems(
         # Each list item can either be:
-        #   * a string representing the source file path (possibly with glob patterns)
-        #   * a mapping where the single key is the file path and the value is its description.
+        #
+        # - a string representing the source file path (possibly with glob patterns)
+        # - a mapping where the single key is the file path and the value is its description.
+        #
         # We therefore accept both `str` and `dict` values.
-        mkconf.ListOfItems(
-            mkconf.Type((str, dict)),
-        ),
+        mkconf.ListOfItems(mkconf.Type((str, dict))),
     )
