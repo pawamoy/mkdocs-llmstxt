@@ -31,8 +31,8 @@ plugins:
     markdown_description: Long description of my project.
     sections:
       Usage documentation:
-      - file1.md
-      - file2.md
+      - file1.md: Description of file1
+      - file2.md  # Descriptions are optional.
 ```
 
 The resulting `/llms.txt` file will be available at the root of your documentation. With the previous example, it will be accessible at https://myproject.com/llms.txt and will contain the following:
@@ -46,7 +46,7 @@ Long description of my project.
 
 ## Usage documentation
 
-- [File1 title](https://myproject.com/file1.md)
+- [File1 title](https://myproject.com/file1.md): Description of file1
 - [File2 title](https://myproject.com/file2.md)
 ```
 
@@ -59,7 +59,7 @@ plugins:
 - llmstxt:
     sections:
       Usage documentation:
-      - index.md
+      - index.md: Main documentation page
       - usage/*.md
 ```
 
