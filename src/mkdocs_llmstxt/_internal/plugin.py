@@ -237,4 +237,8 @@ def _generate_page_markdown(
         autoclean(soup)
     if preprocess:
         _preprocess(soup, preprocess, path)
-    return mdformat.text(_converter.convert_soup(soup), options={"wrap": "no"})
+    return mdformat.text(
+        _converter.convert_soup(soup),
+        options={"wrap": "no"},
+        extensions=("tables",),
+    )
