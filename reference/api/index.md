@@ -93,6 +93,7 @@ def on_config(self, config: MkDocsConfig) -> MkDocsConfig | None:
     if config.site_url is None:
         raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
     self.mkdocs_config = config
+
     # A `defaultdict` could be used, but we need to retain the same order between `config.sections` and `md_pages`
     # (which wouldn't be guaranteed when filling `md_pages` in `on_page_content()`).
     self.md_pages = {section: [] for section in self.config.sections}
@@ -139,10 +140,10 @@ def on_files(self, files: Files, *, config: MkDocsConfig) -> Files | None:  # no
         Modified collection or none.
     """
     page_uris = list(files.src_uris)
-
-    for section_name, file_list in list(self.config.sections.items()):
-        self.config.sections[section_name] = self._expand_inputs(file_list, page_uris=page_uris)
-
+    self._sections = {
+        section_name: self._expand_inputs(file_list, page_uris=page_uris)  # type: ignore[arg-type]
+        for section_name, file_list in self.config.sections.items()
+    }
     return files
 
 ```
@@ -177,8 +178,9 @@ def on_page_content(self, html: str, *, page: Page, **kwargs: Any) -> str | None
         html: The rendered HTML.
         page: The page object.
     """
-    for section_name, file_list in self.config.sections.items():
-        if page.file.src_uri in file_list:
+    src_uri = page.file.src_uri
+    for section_name, files in self._sections.items():
+        if src_uri in files:
             path_md = Path(page.file.abs_dest_path).with_suffix(".md")
             page_md = _generate_page_markdown(
                 html,
@@ -200,10 +202,11 @@ def on_page_content(self, html: str, *, page: Page, **kwargs: Any) -> str | None
 
             self.md_pages[section_name].append(
                 _MDPageInfo(
-                    title=page.title if page.title is not None else page.file.src_uri,
+                    title=page.title if page.title is not None else src_uri,
                     path_md=path_md,
                     md_url=md_url,
                     content=page_md,
+                    description=files[src_uri],
                 ),
             )
 
@@ -253,10 +256,10 @@ def on_post_build(self, *, config: MkDocsConfig, **kwargs: Any) -> None:  # noqa
 
     for section_name, file_list in self.md_pages.items():
         markdown += f"## {section_name}\n\n"
-        for page_title, path_md, md_url, content in file_list:
+        for page_title, path_md, md_url, content, desc in file_list:
             path_md.write_text(content, encoding="utf8")
             _logger.debug(f"Generated MD file to {path_md}")
-            markdown += f"- [{page_title}]({md_url})\n"
+            markdown += f"- [{page_title}]({md_url}){(': ' + desc) if desc else ''}\n"
         markdown += "\n"
 
     output_file.write_text(markdown, encoding="utf8")
