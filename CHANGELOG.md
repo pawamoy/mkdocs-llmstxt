@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.3.0](https://github.com/pawamoy/mkdocs-llmstxt/releases/tag/0.3.0) - 2025-07-14
+
+<small>[Compare with 0.2.0](https://github.com/pawamoy/mkdocs-llmstxt/compare/0.2.0...0.3.0)</small>
+
+### Features
+
+- Support file descriptions ([33f64b3](https://github.com/pawamoy/mkdocs-llmstxt/commit/33f64b306199218dbb34cd796e59113388a6c26c) by Logan). [Issue-6](https://github.com/pawamoy/mkdocs-llmstxt/issues/6), [PR-8](https://github.com/pawamoy/mkdocs-llmstxt/pull/8), Co-authored-by: Timothée Mazzucotelli <dev@pawamoy.fr>
+
+### Bug Fixes
+
+- Support formatting Markdown tables ([f1fc875](https://github.com/pawamoy/mkdocs-llmstxt/commit/f1fc8757dcab95af7b645331ddc5f1f01888bc88) by Timothée Mazzucotelli). [Issue-13](https://github.com/pawamoy/mkdocs-llmstxt/issues/13)
+
 ## [0.2.0](https://github.com/pawamoy/mkdocs-llmstxt/releases/tag/0.2.0) - 2025-04-08
 
 <small>[Compare with 0.1.0](https://github.com/pawamoy/mkdocs-llmstxt/compare/0.1.0...0.2.0)</small>
