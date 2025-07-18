@@ -75,6 +75,41 @@ def _to_remove(tag: Tag) -> bool:
     return False
 
 
+def transform_source_to_details(soup: Soup) -> None:
+    """Transform mkdocstrings source code tables into collapsible details sections.
+
+    Parameters:
+        soup: The soup to modify.
+    """
+    # Find mkdocstrings source code sections - these are typically in tables with highlighttable class
+    # or pre/code blocks within certain containers that show source code
+    for element in soup.find_all("table", attrs={"class": "highlighttable"}):
+        code_element = element.find("code")
+        if code_element:
+            source_code = code_element.get_text()
+
+            # Detect language from classes - default to python for mkdocstrings
+            language = "python"
+            classes = code_element.get("class") or []
+            for cls in classes:
+                if cls.startswith("language-"):
+                    language = cls[9:]
+                    break
+
+            # Create collapsible details section
+            details_html = f"""<details>
+<summary>Source code</summary>
+
+```{language}
+{source_code}
+```
+
+</details>"""
+
+            # Replace the table with the details section
+            element.replace_with(Soup(details_html, "html.parser"))
+
+
 def autoclean(soup: Soup) -> None:
     """Auto-clean the soup by removing elements.
 
@@ -99,4 +134,9 @@ def autoclean(soup: Soup) -> None:
 
     # Remove line numbers from code blocks.
     for element in soup.find_all("table", attrs={"class": "highlighttable"}):
-        element.replace_with(Soup(f"<pre>{html.escape(element.find('code').get_text())}</pre>", "html.parser"))  # type: ignore[union-attr]
+        element.replace_with(
+            Soup(
+                f"<pre>{html.escape(element.find('code').get_text())}</pre>",
+                "html.parser",
+            )
+        )  # type: ignore[union-attr]

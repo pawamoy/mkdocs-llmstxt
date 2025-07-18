@@ -18,7 +18,11 @@ from mkdocs.structure.pages import Page
 
 from mkdocs_llmstxt._internal.config import _PluginConfig
 from mkdocs_llmstxt._internal.logger import _get_logger
-from mkdocs_llmstxt._internal.preprocess import _preprocess, autoclean
+from mkdocs_llmstxt._internal.preprocess import (
+    _preprocess,
+    autoclean,
+    transform_source_to_details,
+)
 
 if TYPE_CHECKING:
     from typing import Any
@@ -59,7 +63,9 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
 
     _sections: dict[str, dict[str, str]]
 
-    def _expand_inputs(self, inputs: list[str | dict[str, str]], page_uris: list[str]) -> dict[str, str]:
+    def _expand_inputs(
+        self, inputs: list[str | dict[str, str]], page_uris: list[str]
+    ) -> dict[str, str]:
         expanded: dict[str, str] = {}
         for input_item in inputs:
             if isinstance(input_item, dict):
@@ -88,7 +94,9 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             The same, untouched config.
         """
         if config.site_url is None:
-            raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
+            raise ValueError(
+                "'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin"
+            )
         self.mkdocs_config = config
 
         # A `defaultdict` could be used, but we need to retain the same order between `config.sections` and `md_pages`
@@ -133,6 +141,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                     html,
                     should_autoclean=self.config.autoclean,
                     preprocess=self.config.preprocess,
+                    convert_source_blocks=self.config.convert_source_blocks,
                     path=str(path_md),
                 )
 
@@ -184,7 +193,9 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             for page_title, path_md, md_url, content, desc in file_list:
                 path_md.write_text(content, encoding="utf8")
                 _logger.debug(f"Generated MD file to {path_md}")
-                markdown += f"- [{page_title}]({md_url}){(': ' + desc) if desc else ''}\n"
+                markdown += (
+                    f"- [{page_title}]({md_url}){(': ' + desc) if desc else ''}\n"
+                )
             markdown += "\n"
 
         output_file.write_text(markdown, encoding="utf8")
@@ -200,7 +211,9 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
 
 
 def _language_callback(tag: Tag) -> str:
-    for css_class in chain(tag.get("class") or (), (tag.parent.get("class") or ()) if tag.parent else ()):
+    for css_class in chain(
+        tag.get("class") or (), (tag.parent.get("class") or ()) if tag.parent else ()
+    ):
         if css_class.startswith("language-"):
             return css_class[9:]
     return ""
@@ -219,6 +232,7 @@ def _generate_page_markdown(
     *,
     should_autoclean: bool,
     preprocess: str | None,
+    convert_source_blocks: bool,
     path: str,
 ) -> str:
     """Convert HTML to Markdown.
@@ -227,12 +241,15 @@ def _generate_page_markdown(
         html: The HTML content.
         should_autoclean: Whether to autoclean the HTML.
         preprocess: An optional path of a Python module containing a `preprocess` function.
+        convert_source_blocks: Whether to convert source code blocks to collapsible details.
         path: The output path of the relevant Markdown file.
 
     Returns:
         The Markdown content.
     """
     soup = Soup(html, "html.parser")
+    if convert_source_blocks:
+        transform_source_to_details(soup)
     if should_autoclean:
         autoclean(soup)
     if preprocess:

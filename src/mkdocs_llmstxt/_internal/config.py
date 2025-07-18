@@ -13,6 +13,7 @@ class _PluginConfig(BaseConfig):
     preprocess = mkconf.Optional(mkconf.File(exists=True))
     markdown_description = mkconf.Optional(mkconf.Type(str))
     full_output = mkconf.Optional(mkconf.Type(str))
+    convert_source_blocks = mkconf.Type(bool, default=False)
     sections = mkconf.DictOfItems(
         # Each list item can either be:
         #
