@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.3.1](https://github.com/pawamoy/mkdocs-llmstxt/releases/tag/0.3.1) - 2025-08-05
+
+<small>[Compare with 0.3.0](https://github.com/pawamoy/mkdocs-llmstxt/compare/0.3.0...0.3.1)</small>
+
+### Bug Fixes
+
+- Preserve user-defined ordering of pages ([1359e25](https://github.com/pawamoy/mkdocs-llmstxt/commit/1359e250e675f7742d18f9641136fccc26199773) by Timothée Mazzucotelli). [Issue-21](https://github.com/pawamoy/mkdocs-llmstxt/issues/21)
+
 ## [0.3.0](https://github.com/pawamoy/mkdocs-llmstxt/releases/tag/0.3.0) - 2025-07-14
 
 <small>[Compare with 0.2.0](https://github.com/pawamoy/mkdocs-llmstxt/compare/0.2.0...0.3.0)</small>
