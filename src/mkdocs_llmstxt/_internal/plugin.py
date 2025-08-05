@@ -36,7 +36,6 @@ class _MDPageInfo(NamedTuple):
     path_md: Path
     md_url: str
     content: str
-    description: str
 
 
 class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
@@ -54,10 +53,9 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
     mkdocs_config: MkDocsConfig
     """The global MkDocs configuration."""
 
-    md_pages: dict[str, list[_MDPageInfo]]
-    """Dictionary mapping section names to a list of page infos."""
-
     _sections: dict[str, dict[str, str]]
+    _file_uris: set[str]
+    _md_pages: dict[str, _MDPageInfo]
 
     def _expand_inputs(self, inputs: list[str | dict[str, str]], page_uris: list[str]) -> dict[str, str]:
         expanded: dict[str, str] = {}
@@ -90,10 +88,6 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if config.site_url is None:
             raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
         self.mkdocs_config = config
-
-        # A `defaultdict` could be used, but we need to retain the same order between `config.sections` and `md_pages`
-        # (which wouldn't be guaranteed when filling `md_pages` in `on_page_content()`).
-        self.md_pages = {section: [] for section in self.config.sections}
         return config
 
     def on_files(self, files: Files, *, config: MkDocsConfig) -> Files | None:  # noqa: ARG002
@@ -114,6 +108,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             section_name: self._expand_inputs(file_list, page_uris=page_uris)  # type: ignore[arg-type]
             for section_name, file_list in self.config.sections.items()
         }
+        self._file_uris = set(chain.from_iterable(self._sections.values()))
+        self._md_pages = {}
         return files
 
     def on_page_content(self, html: str, *, page: Page, **kwargs: Any) -> str | None:  # noqa: ARG002
@@ -125,37 +121,32 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             html: The rendered HTML.
             page: The page object.
         """
-        src_uri = page.file.src_uri
-        for section_name, files in self._sections.items():
-            if src_uri in files:
-                path_md = Path(page.file.abs_dest_path).with_suffix(".md")
-                page_md = _generate_page_markdown(
-                    html,
-                    should_autoclean=self.config.autoclean,
-                    preprocess=self.config.preprocess,
-                    path=str(path_md),
-                )
+        if (src_uri := page.file.src_uri) in self._file_uris:
+            path_md = Path(page.file.abs_dest_path).with_suffix(".md")
+            page_md = _generate_page_markdown(
+                html,
+                should_autoclean=self.config.autoclean,
+                preprocess=self.config.preprocess,
+                path=str(path_md),
+            )
 
-                md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
-                # Apply the same logic as in the `Page.url` property.
-                if md_url in (".", "./"):
-                    md_url = ""
+            md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
+            # Apply the same logic as in the `Page.url` property.
+            if md_url in (".", "./"):
+                md_url = ""
 
-                # Guaranteed to exist as we require `site_url` to be configured.
-                base = cast("str", self.mkdocs_config.site_url)
-                if not base.endswith("/"):
-                    base += "/"
-                md_url = urljoin(base, md_url)
+            # Guaranteed to exist as we require `site_url` to be configured.
+            base = cast("str", self.mkdocs_config.site_url)
+            if not base.endswith("/"):
+                base += "/"
+            md_url = urljoin(base, md_url)
 
-                self.md_pages[section_name].append(
-                    _MDPageInfo(
-                        title=page.title if page.title is not None else src_uri,
-                        path_md=path_md,
-                        md_url=md_url,
-                        content=page_md,
-                        description=files[src_uri],
-                    ),
-                )
+            self._md_pages[src_uri] = _MDPageInfo(
+                title=page.title if page.title is not None else src_uri,
+                path_md=path_md,
+                md_url=md_url,
+                content=page_md,
+            )
 
         return html
 
@@ -179,9 +170,10 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
 
         full_markdown = markdown
 
-        for section_name, file_list in self.md_pages.items():
+        for section_name, page_uris in self._sections.items():
             markdown += f"## {section_name}\n\n"
-            for page_title, path_md, md_url, content, desc in file_list:
+            for page_uri, desc in page_uris.items():
+                page_title, path_md, md_url, content = self._md_pages[page_uri]
                 path_md.write_text(content, encoding="utf8")
                 _logger.debug(f"Generated MD file to {path_md}")
                 markdown += f"- [{page_title}]({md_url}){(': ' + desc) if desc else ''}\n"
@@ -192,8 +184,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
 
         if self.config.full_output is not None:
             full_output_file = Path(config.site_dir).joinpath(self.config.full_output)
-            for section_name, file_list in self.md_pages.items():
-                list_content = "\n".join(info.content for info in file_list)
+            for section_name, page_uris in self._sections.items():
+                list_content = "\n".join(self._md_pages[page_uri].content for page_uri in page_uris)
                 full_markdown += f"# {section_name}\n\n{list_content}"
             full_output_file.write_text(full_markdown, encoding="utf8")
             _logger.debug(f"Generated file /{self.config.full_output}.txt")
