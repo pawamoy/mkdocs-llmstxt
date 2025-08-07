@@ -173,6 +173,9 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         for section_name, page_uris in self._sections.items():
             markdown += f"## {section_name}\n\n"
             for page_uri, desc in page_uris.items():
+                if page_uri not in self._md_pages:
+                    _logger.warning(f"Page URI '{page_uri}' not found in the generated pages. Skipping.")
+                    continue
                 page_title, path_md, md_url, content = self._md_pages[page_uri]
                 path_md.write_text(content, encoding="utf8")
                 _logger.debug(f"Generated MD file to {path_md}")
@@ -185,7 +188,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if self.config.full_output is not None:
             full_output_file = Path(config.site_dir).joinpath(self.config.full_output)
             for section_name, page_uris in self._sections.items():
-                list_content = "\n".join(self._md_pages[page_uri].content for page_uri in page_uris)
+                list_content = "\n".join(self._md_pages[page_uri].content for page_uri in page_uris if page_uri in self._md_pages)
                 full_markdown += f"# {section_name}\n\n{list_content}"
             full_output_file.write_text(full_markdown, encoding="utf8")
             _logger.debug(f"Generated file /{self.config.full_output}.txt")
