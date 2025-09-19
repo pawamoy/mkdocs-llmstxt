@@ -40,7 +40,6 @@ Attributes:
 
 ```python
 mkdocs_config: MkDocsConfig
-
 ```
 
 The global MkDocs configuration.
@@ -49,7 +48,6 @@ The global MkDocs configuration.
 
 ```python
 on_config(config: MkDocsConfig) -> MkDocsConfig | None
-
 ```
 
 Save the global MkDocs configuration.
@@ -84,7 +82,6 @@ def on_config(self, config: MkDocsConfig) -> MkDocsConfig | None:
         raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
     self.mkdocs_config = config
     return config
-
 ```
 
 ### on_files
@@ -93,7 +90,6 @@ def on_config(self, config: MkDocsConfig) -> MkDocsConfig | None:
 on_files(
     files: Files, *, config: MkDocsConfig
 ) -> Files | None
-
 ```
 
 Expand inputs for generated files.
@@ -133,7 +129,6 @@ def on_files(self, files: Files, *, config: MkDocsConfig) -> Files | None:  # no
     self._file_uris = set(chain.from_iterable(self._sections.values()))
     self._md_pages = {}
     return files
-
 ```
 
 ### on_page_content
@@ -142,7 +137,6 @@ def on_files(self, files: Files, *, config: MkDocsConfig) -> Files | None:  # no
 on_page_content(
     html: str, *, page: Page, **kwargs: Any
 ) -> str | None
-
 ```
 
 Convert page content into a Markdown file and save the result to be processed in the `on_post_build` hook.
@@ -194,7 +188,6 @@ def on_page_content(self, html: str, *, page: Page, **kwargs: Any) -> str | None
         )
 
     return html
-
 ```
 
 ### on_post_build
@@ -203,7 +196,6 @@ def on_page_content(self, html: str, *, page: Page, **kwargs: Any) -> str | None
 on_post_build(
     *, config: MkDocsConfig, **kwargs: Any
 ) -> None
-
 ```
 
 Create the final `llms.txt` file and the MD files for all selected pages.
@@ -240,6 +232,9 @@ def on_post_build(self, *, config: MkDocsConfig, **kwargs: Any) -> None:  # noqa
     for section_name, page_uris in self._sections.items():
         markdown += f"## {section_name}\n\n"
         for page_uri, desc in page_uris.items():
+            if page_uri not in self._md_pages:
+                _logger.warning(f"Page URI '{page_uri}' not found in the generated pages. Skipping.")
+                continue
             page_title, path_md, md_url, content = self._md_pages[page_uri]
             path_md.write_text(content, encoding="utf8")
             _logger.debug(f"Generated MD file to {path_md}")
@@ -252,18 +247,16 @@ def on_post_build(self, *, config: MkDocsConfig, **kwargs: Any) -> None:  # noqa
     if self.config.full_output is not None:
         full_output_file = Path(config.site_dir).joinpath(self.config.full_output)
         for section_name, page_uris in self._sections.items():
-            list_content = "\n".join(self._md_pages[page_uri].content for page_uri in page_uris)
+            list_content = "\n".join(self._md_pages[page_uri].content for page_uri in page_uris if page_uri in self._md_pages)
             full_markdown += f"# {section_name}\n\n{list_content}"
         full_output_file.write_text(full_markdown, encoding="utf8")
         _logger.debug(f"Generated file /{self.config.full_output}.txt")
-
 ```
 
 ## autoclean
 
 ```python
 autoclean(soup: BeautifulSoup) -> None
-
 ```
 
 Auto-clean the soup by removing elements.
@@ -300,5 +293,4 @@ def autoclean(soup: Soup) -> None:
     # Remove line numbers from code blocks.
     for element in soup.find_all("table", attrs={"class": "highlighttable"}):
         element.replace_with(Soup(f"<pre>{html.escape(element.find('code').get_text())}</pre>", "html.parser"))  # type: ignore[union-attr]
-
 ```

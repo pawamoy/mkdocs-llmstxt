@@ -10,7 +10,6 @@ See our own dynamically generated [/llms.txt](https://pawamoy.github.io/mkdocs-l
 
 ```bash
 pip install mkdocs-llmstxt
-
 ```
 
 ## Usage
@@ -31,7 +30,6 @@ plugins:
       Usage documentation:
       - file1.md: Description of file1
       - file2.md  # Descriptions are optional.
-
 ```
 
 The resulting `/llms.txt` file will be available at the root of your documentation. With the previous example, it will be accessible at <https://myproject.com/llms.txt> and will contain the following:
@@ -47,7 +45,6 @@ Long description of my project.
 
 - [File1 title](https://myproject.com/file1.md): Description of file1
 - [File2 title](https://myproject.com/file2.md)
-
 ```
 
 Each source file included in `sections` will have its own Markdown file available at the specified URL in the `/llms.txt`. See [Markdown generation](#markdown-generation) for more details.
@@ -63,7 +60,6 @@ plugins:
       Usage documentation:
       - index.md: Main documentation page
       - usage/*.md
-
 ```
 
 ## Full output
@@ -80,7 +76,6 @@ plugins:
       Usage documentation:
       - index.md
       - usage/*.md
-
 ```
 
 ## Markdown generation
@@ -102,7 +97,6 @@ mkdocs.yml
 plugins:
 - llmstxt:
     autoclean: false
-
 ```
 
 You can also pre-process the HTML before it is converted back to Markdown:
@@ -113,7 +107,6 @@ mkdocs.yml
 plugins:
 - llmstxt:
     preprocess: path/to/script.py
-
 ```
 
 The specified `script.py` must expose a `preprocess` function that accepts the `soup` and `output` arguments:
@@ -126,7 +119,6 @@ if TYPE_CHECKING:
 
 def preprocess(soup: BeautifulSoup, output: str) -> None:
     ...  # modify the soup
-
 ```
 
 The `output` argument lets you modify the soup *depending on which file is being generated*.
