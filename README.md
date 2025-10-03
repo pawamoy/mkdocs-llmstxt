@@ -72,7 +72,7 @@ The resulting `llms.txt` uses `base_url` when it is specified, instead of the ca
 ```yaml title="mkdocs.yml"
 plugins:
 - llmstxt: 
-      base_url: https://productname.hostname.io/en/0.1.34
+    base_url: https://productname.hostname.io/en/0.1.34
 ```
 
 ## Full output
