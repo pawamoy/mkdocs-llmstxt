@@ -63,15 +63,17 @@ plugins:
       - usage/*.md
 ```
 
-## Versioned documentation
+## Override `site_url`
 
-If your documentation is versioned when it is published, such as when using [Read the Docs](https://github.com/readthedocs/), you can use `docs_version` to indicate the root path to the hosted docs and specify the language and version. The resulting `llms.txt` uses this value when building URLs for each file, rather than the canonical `site_url`. 
+Use `base_url` to point `llms.txt` to documentation in a specified directory. For example, when using [Read the Docs](https://github.com/readthedocs/), use `base_url` to indicate the path to the hosted docs built for a specific language or version. 
+
+The resulting `llms.txt` uses `base_url` when it is specified, instead of the canonical `site_url`.  
 
 
 ```yaml title="mkdocs.yml"
 plugins:
 - llmstxt: 
-      docs_version: https://productname.hostname.io/en/0.1.34
+      base_url: https://productname.hostname.io/en/0.1.34
 ```
 
 ## Full output
