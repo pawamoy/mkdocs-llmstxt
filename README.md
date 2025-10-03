@@ -89,8 +89,6 @@ plugins:
       - usage/*.md
 ```
 
-
-
 ## Markdown generation
 
 To generate a Markdown page from a source file, the plugin will:
