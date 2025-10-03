@@ -138,7 +138,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             # Use `base_url` if it exists.
             if self.config.base_url is not None:
                 base = cast("str", self.config.base_url)
-            else: # use a url that is guaranteed to exist as we require `site_url` to be configured.
+            else:
+                # Use `site_url`, which we assume to be always specified.
                 base = cast("str", self.mkdocs_config.site_url)
             if not base.endswith("/"):
                 base += "/"
@@ -191,7 +192,9 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if self.config.full_output is not None:
             full_output_file = Path(config.site_dir).joinpath(self.config.full_output)
             for section_name, page_uris in self._sections.items():
-                list_content = "\n".join(self._md_pages[page_uri].content for page_uri in page_uris if page_uri in self._md_pages)
+                list_content = "\n".join(
+                    self._md_pages[page_uri].content for page_uri in page_uris if page_uri in self._md_pages
+                )
                 full_markdown += f"# {section_name}\n\n{list_content}"
             full_output_file.write_text(full_markdown, encoding="utf8")
             _logger.debug(f"Generated file /{self.config.full_output}.txt")
