@@ -135,7 +135,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             if md_url in (".", "./"):
                 md_url = ""
 
-            # Use base_url if it exists
+            # Use `base_url` if it exists.
             if self.config.base_url is not None:
                 base = cast("str", self.config.base_url)
             else: # use a url that is guaranteed to exist as we require `site_url` to be configured.
