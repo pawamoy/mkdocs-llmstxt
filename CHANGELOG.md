@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.4.0](https://github.com/pawamoy/mkdocs-llmstxt/releases/tag/0.4.0) - 2025-10-03
+
+<small>[Compare with 0.3.2](https://github.com/pawamoy/mkdocs-llmstxt/compare/0.3.2...0.4.0)</small>
+
+### Features
+
+- Add `base_url` config option ([718b0bc](https://github.com/pawamoy/mkdocs-llmstxt/commit/718b0bcc0183d6c64a57dc2efee93552d170e9e3) by Jo Stichbury). [PR-25](https://github.com/pawamoy/mkdocs-llmstxt/pull/25)
+
 ## [0.3.2](https://github.com/pawamoy/mkdocs-llmstxt/releases/tag/0.3.2) - 2025-09-19
 
 <small>[Compare with 0.3.1](https://github.com/pawamoy/mkdocs-llmstxt/compare/0.3.1...0.3.2)</small>
