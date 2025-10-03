@@ -65,10 +65,9 @@ plugins:
 
 ## Override `site_url`
 
-Use `base_url` to point `llms.txt` to documentation in a specified directory. For example, when using [Read the Docs](https://github.com/readthedocs/), use `base_url` to indicate the path to the hosted docs built for a specific language or version. 
+Use `base_url` to point `llms.txt` to documentation in a specific directory. For example, when using [Read the Docs](https://github.com/readthedocs/), use `base_url` to indicate the path to the hosted docs built for a specific language or version.
 
 The resulting `llms.txt` uses `base_url` when it is specified, instead of the canonical `site_url`.  
-
 
 ```yaml title="mkdocs.yml"
 plugins:
