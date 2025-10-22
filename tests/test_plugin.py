@@ -64,7 +64,7 @@ def test_plugin(mkdocs_conf: MkDocsConfig) -> None:
     page2md = Path(mkdocs_conf.site_dir, "page2/index.md")
     assert page2md.exists()
     page2md_content = page2md.read_text()
-    
+
     # Check that relative links are converted to absolute URLs
     assert "https://example.org/en/0.1.34/index.md" in page2md_content  # ../index.md converted
     assert "https://example.org/page1.md" in page2md_content  # /page1.md converted (absolute from domain root)

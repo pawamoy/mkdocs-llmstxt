@@ -203,7 +203,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if self.config.preprocess:
             _preprocess(soup, self.config.preprocess, str(_get_page_md_path(page)))
         if self.config.absolute_link:
-            base_uri = self._get_base_url()    
+            base_uri = self._get_base_url()
             current_dir = _get_parent_directory(page.file.dest_uri)
             self._convert_to_absolute_links(soup, base_uri, current_dir)
 
@@ -224,39 +224,36 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         # Find all anchor tags with href attributes
         for link in soup.find_all("a", href=True):
             href = link.get("href")
-            
+
             # Skip if href is not a string or is empty
             if not isinstance(href, str) or not href:
                 continue
-                
+
             # Skip if it's already an absolute URL (starts with http:// or https://)
             if href.startswith(("http://", "https://")):
                 continue
-                
+
             # Skip if it's a mailto: or other protocol links
             if ":" in href and not href.startswith("/"):
                 continue
-                
+
             # Skip if it's an anchor link (starts with #)
             if href.startswith("#"):
                 continue
-                
+
             # Convert relative link to absolute
             if href.startswith("/"):
                 # Absolute path from site root
                 final_href = urljoin(base_uri, href)
             else:
                 # Relative path from current directory
-                if current_dir:
-                    relative_base = urljoin(base_uri, current_dir + "/")
-                else:
-                    relative_base = base_uri
+                relative_base = urljoin(base_uri, current_dir + "/") if current_dir else base_uri
                 final_href = urljoin(relative_base, href)
-            
+
             # If the final path ends with /, add index file name
             if final_href.endswith("/"):
                 final_href = final_href + (self.config.index_file_name or "")
-            
+
             link["href"] = final_href
 
     def _get_base_url(self) -> str:
@@ -267,7 +264,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if not base_url.endswith("/"):
             base_url += "/"
         return base_url
-        
+
 
 def _get_page_md_path(page: Page) -> Path:
     return Path(page.file.abs_dest_path).with_suffix(".md")
@@ -276,8 +273,7 @@ def _get_page_md_path(page: Page) -> Path:
 def _get_parent_directory(dest_uri: str) -> str:
     if dest_uri == ".":
         return ""
-    else:
-        return str(Path(dest_uri).parent)
+    return str(Path(dest_uri).parent)
 
 
 def _language_callback(tag: Tag) -> str:
