@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import html
 import sys
-from urllib.parse import urljoin
 from importlib.util import module_from_spec, spec_from_file_location
 from typing import TYPE_CHECKING
 
 from bs4 import BeautifulSoup as Soup
-from bs4.element import NavigableString
+from bs4 import NavigableString
 from mkdocs.exceptions import PluginError
 
 if TYPE_CHECKING:
