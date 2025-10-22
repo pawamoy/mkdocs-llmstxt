@@ -17,6 +17,7 @@ from mkdocs.config.defaults import MkDocsConfig
                         "llmstxt": {
                             "full_output": "llms-full.txt",
                             "base_url": "https://example.org/en/0.1.34",
+                            "absolute_link": True,
                             "sections": {
                                 "Index": ["index.md"],
                                 "Usage": [{"page1.md": "Some usage docs."}],

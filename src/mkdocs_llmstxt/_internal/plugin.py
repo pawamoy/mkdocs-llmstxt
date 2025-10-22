@@ -202,19 +202,18 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             autoclean(soup)
         if self.config.preprocess:
             _preprocess(soup, self.config.preprocess, str(_get_page_md_path(page)))
-        
-        # Get base_uri from config
-        base_uri = self._get_base_url()
-            
-        dest_uri_parent = _get_parent_directory(page.file.dest_uri)
-        self._handle_links(soup, base_uri, dest_uri_parent)
+        if self.config.absolute_link:
+            base_uri = self._get_base_url()    
+            current_dir = _get_parent_directory(page.file.dest_uri)
+            self._convert_to_absolute_links(soup, base_uri, current_dir)
+
         return mdformat.text(
             _converter.convert_soup(soup),
             options={"wrap": "no"},
             extensions=("tables",),
         )
 
-    def _handle_links(self, soup: Soup, base_uri: str, current_dir: str) -> None:
+    def _convert_to_absolute_links(self, soup: Soup, base_uri: str, current_dir: str) -> None:
         """Handle links in the HTML.
 
         Parameters:
