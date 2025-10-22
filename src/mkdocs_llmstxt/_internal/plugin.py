@@ -122,18 +122,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             page: The page object.
         """
         if (src_uri := page.file.src_uri) in self._file_uris:
-            path_md = Path(page.file.abs_dest_path).with_suffix(".md")
-            page_md = _generate_page_markdown(
-                html,
-                should_autoclean=self.config.autoclean,
-                preprocess=self.config.preprocess,
-                path=str(path_md),
-            )
-
-            md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
-            # Apply the same logic as in the `Page.url` property.
-            if md_url in (".", "./"):
-                md_url = ""
+            page_md = self._generate_page_markdown(html, page)
 
             # Use `base_url` if it exists.
             if self.config.base_url is not None:
@@ -143,11 +132,16 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                 base = cast("str", self.mkdocs_config.site_url)
             if not base.endswith("/"):
                 base += "/"
+
+            md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
+            # Apply the same logic as in the `Page.url` property.
+            if md_url in (".", "./"):
+                md_url = ""
             md_url = urljoin(base, md_url)
 
             self._md_pages[src_uri] = _MDPageInfo(
-                title=page.title if page.title is not None else src_uri,
-                path_md=path_md,
+                title=str(page.title) if page.title is not None else src_uri,
+                path_md=_get_page_md_path(page),
                 md_url=md_url,
                 content=page_md,
             )
@@ -199,6 +193,94 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             full_output_file.write_text(full_markdown, encoding="utf8")
             _logger.debug(f"Generated file /{self.config.full_output}.txt")
 
+    def _generate_page_markdown(self, html: str, page: Page) -> str:
+        """Convert HTML to Markdown.
+
+        Parameters:
+            html: The HTML content.
+            page: The page object.
+
+        Returns:
+            The Markdown content.
+        """
+        soup = Soup(html, "html.parser")
+        if self.config.autoclean:
+            autoclean(soup)
+        if self.config.preprocess:
+            _preprocess(soup, self.config.preprocess, str(_get_page_md_path(page)))
+        
+        # Get base_uri from config
+        if self.config.base_url is not None:
+            base_uri = cast("str", self.config.base_url)
+        else:
+            base_uri = cast("str", self.mkdocs_config.site_url)
+        if not base_uri.endswith("/"):
+            base_uri += "/"
+            
+        dest_uri_parent = _get_parent_directory(page.file.dest_uri)
+        self._handle_links(soup, base_uri, dest_uri_parent)
+        return mdformat.text(
+            _converter.convert_soup(soup),
+            options={"wrap": "no"},
+            extensions=("tables",),
+        )
+
+    def _handle_links(self, soup: Soup, base_uri: str, current_dir: str) -> None:
+        """Handle links in the HTML.
+
+        Parameters:
+            soup: The soup to modify.
+            base_uri: The base URI of the site.
+            current_dir: The current directory of the page (relative to site root).
+        """
+        # Find all anchor tags with href attributes
+        for link in soup.find_all("a", href=True):
+            href = link.get("href")
+            
+            # Skip if href is not a string or is empty
+            if not isinstance(href, str) or not href:
+                continue
+                
+            # Skip if it's already an absolute URL (starts with http:// or https://)
+            if href.startswith(("http://", "https://")):
+                continue
+                
+            # Skip if it's a mailto: or other protocol links
+            if ":" in href and not href.startswith("/"):
+                continue
+                
+            # Skip if it's an anchor link (starts with #)
+            if href.startswith("#"):
+                continue
+                
+            # Convert relative link to absolute
+            if href.startswith("/"):
+                # Absolute path from site root
+                final_href = urljoin(base_uri, href)
+            else:
+                # Relative path from current directory
+                if current_dir:
+                    relative_base = urljoin(base_uri, current_dir + "/")
+                else:
+                    relative_base = base_uri
+                final_href = urljoin(relative_base, href)
+            
+            # If the final path ends with /, add index file name
+            if final_href.endswith("/"):
+                final_href = final_href + (self.config.index_file_name or "")
+            
+            link["href"] = final_href
+
+def _get_page_md_path(page: Page) -> Path:
+    return Path(page.file.abs_dest_path).with_suffix(".md")
+
+
+def _get_parent_directory(dest_uri: str) -> str:
+    if dest_uri == ".":
+        return ""
+    else:
+        return str(Path(dest_uri).parent)
+
 
 def _language_callback(tag: Tag) -> str:
     for css_class in chain(tag.get("class") or (), (tag.parent.get("class") or ()) if tag.parent else ()):
@@ -213,33 +295,3 @@ _converter = MarkdownConverter(
     escape_underscores=False,
     heading_style=ATX,
 )
-
-
-def _generate_page_markdown(
-    html: str,
-    *,
-    should_autoclean: bool,
-    preprocess: str | None,
-    path: str,
-) -> str:
-    """Convert HTML to Markdown.
-
-    Parameters:
-        html: The HTML content.
-        should_autoclean: Whether to autoclean the HTML.
-        preprocess: An optional path of a Python module containing a `preprocess` function.
-        path: The output path of the relevant Markdown file.
-
-    Returns:
-        The Markdown content.
-    """
-    soup = Soup(html, "html.parser")
-    if should_autoclean:
-        autoclean(soup)
-    if preprocess:
-        _preprocess(soup, preprocess, path)
-    return mdformat.text(
-        _converter.convert_soup(soup),
-        options={"wrap": "no"},
-        extensions=("tables",),
-    )

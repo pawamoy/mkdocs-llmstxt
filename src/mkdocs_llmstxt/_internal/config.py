@@ -14,6 +14,7 @@ class _PluginConfig(BaseConfig):
     base_url = mkconf.Optional(mkconf.Type(str))
     markdown_description = mkconf.Optional(mkconf.Type(str))
     full_output = mkconf.Optional(mkconf.Type(str))
+    index_file_name = mkconf.Type(str, default="index.md")
     sections = mkconf.DictOfItems(
         # Each list item can either be:
         #
