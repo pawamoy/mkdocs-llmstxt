@@ -124,14 +124,8 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if (src_uri := page.file.src_uri) in self._file_uris:
             page_md = self._generate_page_markdown(html, page)
 
-            # Use `base_url` if it exists.
-            if self.config.base_url is not None:
-                base = cast("str", self.config.base_url)
-            else:
-                # Use `site_url`, which we assume to be always specified.
-                base = cast("str", self.mkdocs_config.site_url)
-            if not base.endswith("/"):
-                base += "/"
+            # Get base URL
+            base = self._get_base_url()
 
             md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
             # Apply the same logic as in the `Page.url` property.
@@ -210,12 +204,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             _preprocess(soup, self.config.preprocess, str(_get_page_md_path(page)))
         
         # Get base_uri from config
-        if self.config.base_url is not None:
-            base_uri = cast("str", self.config.base_url)
-        else:
-            base_uri = cast("str", self.mkdocs_config.site_url)
-        if not base_uri.endswith("/"):
-            base_uri += "/"
+        base_uri = self._get_base_url()
             
         dest_uri_parent = _get_parent_directory(page.file.dest_uri)
         self._handle_links(soup, base_uri, dest_uri_parent)
@@ -270,6 +259,16 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                 final_href = final_href + (self.config.index_file_name or "")
             
             link["href"] = final_href
+
+    def _get_base_url(self) -> str:
+        if self.config.base_url is not None:
+            base_url = cast("str", self.config.base_url)
+        else:
+            base_url = cast("str", self.mkdocs_config.site_url)
+        if not base_url.endswith("/"):
+            base_url += "/"
+        return base_url
+        
 
 def _get_page_md_path(page: Page) -> Path:
     return Path(page.file.abs_dest_path).with_suffix(".md")
