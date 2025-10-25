@@ -140,6 +140,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                 preprocess=self.config.preprocess,
                 path=str(path_md),
                 base_uri=self._base_url,
+                page_uri=page.file.dest_uri
             )
 
             md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
@@ -225,6 +226,7 @@ def _generate_page_markdown(
     preprocess: str | None,
     path: str,
     base_uri: str,
+    page_uri: str
 ) -> str:
     """Convert HTML to Markdown.
 
@@ -234,7 +236,7 @@ def _generate_page_markdown(
         preprocess: An optional path of a Python module containing a `preprocess` function.
         path: The output path of the relevant Markdown file.
         base_uri: The base URI of the site.
-
+        page_uri: The destination URI of the page.
     Returns:
         The Markdown content.
     """
@@ -245,7 +247,7 @@ def _generate_page_markdown(
         _preprocess(soup, preprocess, path)
 
     # Convert relative links to absolute links
-    current_dir = _get_parent_directory(path)
+    current_dir = Path(page_uri).parent.as_posix()
     _convert_to_absolute_links(soup, base_uri, current_dir)
 
     return mdformat.text(
@@ -298,9 +300,3 @@ def _convert_to_absolute_links(soup: Soup, base_uri: str, current_dir: str) -> N
             final_href = final_href + "index.md"
 
         link["href"] = final_href
-
-
-def _get_parent_directory(dest_uri: str) -> str:
-    if dest_uri == ".":
-        return ""
-    return str(Path(dest_uri).parent)
