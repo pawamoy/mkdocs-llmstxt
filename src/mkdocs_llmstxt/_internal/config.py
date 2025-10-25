@@ -13,9 +13,7 @@ class _PluginConfig(BaseConfig):
     preprocess = mkconf.Optional(mkconf.File(exists=True))
     base_url = mkconf.Optional(mkconf.Type(str))
     markdown_description = mkconf.Optional(mkconf.Type(str))
-    absolute_link = mkconf.Type(bool, default=False)
     full_output = mkconf.Optional(mkconf.Type(str))
-    index_file_name = mkconf.Type(str, default="index.md")
     sections = mkconf.DictOfItems(
         # Each list item can either be:
         #

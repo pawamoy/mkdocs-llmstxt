@@ -124,14 +124,11 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if (src_uri := page.file.src_uri) in self._file_uris:
             page_md = self._generate_page_markdown(html, page)
 
-            # Get base URL
-            base = self._get_base_url()
-
             md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
             # Apply the same logic as in the `Page.url` property.
             if md_url in (".", "./"):
                 md_url = ""
-            md_url = urljoin(base, md_url)
+            md_url = urljoin(self._get_base_url(), md_url)
 
             self._md_pages[src_uri] = _MDPageInfo(
                 title=str(page.title) if page.title is not None else src_uri,
@@ -202,10 +199,11 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
             autoclean(soup)
         if self.config.preprocess:
             _preprocess(soup, self.config.preprocess, str(_get_page_md_path(page)))
-        if self.config.absolute_link:
-            base_uri = self._get_base_url()
-            current_dir = _get_parent_directory(page.file.dest_uri)
-            self._convert_to_absolute_links(soup, base_uri, current_dir)
+
+        # Convert relative links to absolute links
+        base_uri = self._get_base_url()
+        current_dir = _get_parent_directory(page.file.dest_uri)
+        self._convert_to_absolute_links(soup, base_uri, current_dir)
 
         return mdformat.text(
             _converter.convert_soup(soup),
@@ -250,9 +248,10 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                 relative_base = urljoin(base_uri, current_dir + "/") if current_dir else base_uri
                 final_href = urljoin(relative_base, href)
 
-            # If the final path ends with /, add index file name
+            # Convert directory paths (ending with /) to point to index.md files
+            # This represents the README.md of the directory
             if final_href.endswith("/"):
-                final_href = final_href + (self.config.index_file_name or "")
+                final_href = final_href + "index.md"
 
             link["href"] = final_href
 
