@@ -245,11 +245,7 @@ def _generate_page_markdown(
         autoclean(soup)
     if preprocess:
         _preprocess(soup, preprocess, path)
-
-    # Convert relative links to absolute links
-    current_dir = Path(page_uri).parent.as_posix()
-    _convert_to_absolute_links(soup, base_uri, current_dir)
-
+    _convert_to_absolute_links(soup, base_uri, page_uri)
     return mdformat.text(
         _converter.convert_soup(soup),
         options={"wrap": "no"},
@@ -257,45 +253,46 @@ def _generate_page_markdown(
     )
 
 
-def _convert_to_absolute_links(soup: Soup, base_uri: str, current_dir: str) -> None:
-    """Handle links in the HTML.
+def _convert_to_absolute_links(soup: Soup, base_uri: str, page_uri: str) -> None:
+    """Convert relative links to absolute ones in the HTML.
 
     Parameters:
         soup: The soup to modify.
         base_uri: The base URI of the site.
-        current_dir: The current directory of the page (relative to site root).
+        page_uri: The destination URI of the page.
     """
-    # Find all anchor tags with href attributes
+    current_dir = Path(page_uri).parent.as_posix()
+
+    # Find all anchor tags with `href` attributes.
     for link in soup.find_all("a", href=True):
         href = link.get("href")
 
-        # Skip if href is not a string or is empty
+        # Skip if `href` is not a string or is empty.
         if not isinstance(href, str) or not href:
             continue
 
-        # Skip if it's already an absolute URL (starts with http:// or https://)
+        # Skip if it's already an absolute URL (starts with `http://` or `https://`).
         if href.startswith(("http://", "https://")):
             continue
 
-        # Skip if it's a mailto: or other protocol links
+        # Skip if it's a `mailto:` or other protocol links.
         if ":" in href and not href.startswith("/"):
             continue
 
-        # Skip if it's an anchor link (starts with #)
+        # Skip if it's an anchor link (starts with `#`).
         if href.startswith("#"):
             continue
 
-        # Convert relative link to absolute
+        # Convert relative link to absolute.
         if href.startswith("/"):
-            # Absolute path from site root
+            # Absolute path from site root.
             final_href = urljoin(base_uri, href)
         else:
-            # Relative path from current directory
+            # Relative path from current directory.
             relative_base = urljoin(base_uri, current_dir + "/") if current_dir else base_uri
             final_href = urljoin(relative_base, href)
 
-        # Convert directory paths (ending with /) to point to index.md files
-        # This represents the README.md of the directory
+        # Convert directory paths (ending with `/`) to point to `index.md` files.
         if final_href.endswith("/"):
             final_href = final_href + "index.md"
 
