@@ -1,6 +1,7 @@
 """Tests for the plugin."""
 
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 from mkdocs.commands.build import build
@@ -29,7 +30,18 @@ from mkdocs.config.defaults import MkDocsConfig
             "pages": {
                 "index.md": "# Hello world",
                 "page1.md": "# Usage\n\nSome paragraph.",
-                "page2.md": "# Links\n\n[Relative link](../index.md)\n[Absolute link](/page1.md)\n[External link](https://example.com)\n[Anchor link](#section)",
+                "page2.md": dedent(
+                    """
+                    # Links
+
+                    [Relative link 1](./index.md)
+                    [Relative link 2](./page1.md)
+                    [Absolute link 1](/en/0.1.34/index.md)
+                    [Absolute link 2](/en/0.1.34/page1/index.md)
+                    [External link](https://example.com)
+                    [Anchor link](#section)
+                    """,
+                ),
             },
         },
     ],
@@ -59,13 +71,32 @@ def test_plugin(mkdocs_conf: MkDocsConfig) -> None:
     assert page1md.exists()
     assert "Some paragraph." in page1md.read_text()
 
-    # Test relative link conversion
     page2md = Path(mkdocs_conf.site_dir, "page2/index.md")
     assert page2md.exists()
     page2md_content = page2md.read_text()
 
-    # Check that relative links are converted to absolute URLs
-    assert "https://example.org/en/0.1.34/index.md" in page2md_content  # ../index.md converted
-    assert "https://example.org/page1.md" in page2md_content  # /page1.md converted (absolute from domain root)
+    # Check that relative links are made absolute in each page and in the full llmstxt file.
+    assert "https://example.org/en/0.1.34/index.md" in page2md_content  # ./index.md converted
+    assert (
+        "https://example.org/en/0.1.34/page1/index.md" in page2md_content
+    )  # /en/0.1.34/page1.md converted (absolute from domain root)
     assert "https://example.com" in page2md_content  # External link unchanged
     assert "#section" in page2md_content  # Anchor link unchanged
+
+    assert "https://example.org/en/0.1.34/index.md" in llmsfulltxt_content
+    assert "https://example.org/en/0.1.34/page1/index.md" in llmsfulltxt_content
+    assert "https://example.com" in llmsfulltxt_content
+    assert "#section" in llmsfulltxt_content
+
+    # Check that llmstxt pages (Markdown) contain links to other llmstxt pages, not HTML ones.
+    assert '"https://example.org/en/0.1.34/index.html"' not in page2md_content
+    assert '"https://example.org/en/0.1.34/page1/"' not in page2md_content
+    assert '"https://example.org/en/0.1.34/page1/index.html"' not in page2md_content
+
+    assert '"https://example.org/en/0.1.34/index.html"' not in llmsfulltxt_content
+    assert '"https://example.org/en/0.1.34/page1/"' not in llmsfulltxt_content
+    assert '"https://example.org/en/0.1.34/page1/index.html"' not in llmsfulltxt_content
+
+    assert '"https://example.org/en/0.1.34/index.html"' not in llmstxt_content
+    assert '"https://example.org/en/0.1.34/page1/"' not in llmstxt_content
+    assert '"https://example.org/en/0.1.34/page1/index.html"' not in llmstxt_content
