@@ -140,7 +140,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                 preprocess=self.config.preprocess,
                 path=str(path_md),
                 base_uri=self._base_url,
-                page_uri=page.file.dest_uri
+                page_uri=page.file.dest_uri,
             )
 
             md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
@@ -226,7 +226,7 @@ def _generate_page_markdown(
     preprocess: str | None,
     path: str,
     base_uri: str,
-    page_uri: str
+    page_uri: str,
 ) -> str:
     """Convert HTML to Markdown.
 
@@ -237,6 +237,7 @@ def _generate_page_markdown(
         path: The output path of the relevant Markdown file.
         base_uri: The base URI of the site.
         page_uri: The destination URI of the page.
+
     Returns:
         The Markdown content.
     """
