@@ -6,7 +6,7 @@ import fnmatch
 from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, cast
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import mdformat
 from bs4 import BeautifulSoup as Soup
@@ -272,26 +272,25 @@ def _convert_to_absolute_links(soup: Soup, base_uri: str, page_uri: str) -> None
         if not isinstance(href, str) or not href:
             continue
 
-        # Skip if it's already an absolute URL (starts with `http://` or `https://`).
-        if href.startswith(("http://", "https://")):
-            continue
-
-        # Skip if it's a `mailto:` or other protocol links.
-        if ":" in href and not href.startswith("/"):
+        # Skip if it's an absolute path
+        if href.startswith("/"):
             continue
 
         # Skip if it's an anchor link (starts with `#`).
         if href.startswith("#"):
             continue
 
-        # Convert relative link to absolute.
-        if href.startswith("/"):
-            # Absolute path from site root.
-            final_href = urljoin(base_uri, href)
-        else:
-            # Relative path from current directory.
-            relative_base = urljoin(base_uri, current_dir + "/") if current_dir else base_uri
-            final_href = urljoin(relative_base, href)
+        # Skip if it's an external link
+        try:
+            if urlparse(href).scheme:
+                continue
+        except ValueError:
+            # Invalid URL, skip
+            continue
+
+        # Relative path from current directory.
+        relative_base = urljoin(base_uri, current_dir + "/") if current_dir else base_uri
+        final_href = urljoin(relative_base, href)
 
         # Convert directory paths (ending with `/`) to point to `index.md` files.
         if final_href.endswith("/"):

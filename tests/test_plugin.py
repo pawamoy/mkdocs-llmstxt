@@ -29,6 +29,7 @@ from mkdocs.config.defaults import MkDocsConfig
             },
             "pages": {
                 "index.md": "# Hello world",
+                "dummy.md": "# Hello world",
                 "page1.md": "# Usage\n\nSome paragraph.",
                 "page2.md": dedent(
                     """
@@ -36,10 +37,15 @@ from mkdocs.config.defaults import MkDocsConfig
 
                     [Relative link 1](./index.md)
                     [Relative link 2](./page1.md)
-                    [Absolute link 1](/en/0.1.34/index.md)
-                    [Absolute link 2](/en/0.1.34/page1/index.md)
+                    [Relative link 3](dummy.md)
+                    [Absolute link 1](/abs1/)
+                    [Absolute link 2](/abs2/index.md)
                     [External link](https://example.com)
                     [Anchor link](#section)
+                    [Email link 1](mailto:test1@example.com)
+                    <test2@example.com>
+                    [External protocol 1](ftp://example1.com)
+                    [External protocol 2](ftp://example2.com/my/)
                     """,
                 ),
             },
@@ -76,22 +82,24 @@ def test_plugin(mkdocs_conf: MkDocsConfig) -> None:
     page2md_content = page2md.read_text()
 
     # Check that relative links are made absolute in each page and in the full llmstxt file.
-    assert "https://example.org/en/0.1.34/index.md" in page2md_content  # ./index.md converted
-    assert (
-        "https://example.org/en/0.1.34/page1/index.md" in page2md_content
-    )  # /en/0.1.34/page1.md converted (absolute from domain root)
-    assert "https://example.com" in page2md_content  # External link unchanged
-    assert "#section" in page2md_content  # Anchor link unchanged
+    assert "(https://example.org/en/0.1.34/index.md)" in page2md_content
+    assert "(https://example.org/en/0.1.34/page1/index.md)" in page2md_content
+    assert "(https://example.org/en/0.1.34/dummy/index.md)" in page2md_content
 
-    assert "https://example.org/en/0.1.34/index.md" in llmsfulltxt_content
-    assert "https://example.org/en/0.1.34/page1/index.md" in llmsfulltxt_content
-    assert "https://example.com" in llmsfulltxt_content
-    assert "#section" in llmsfulltxt_content
+    assert "(/abs1/)" in page2md_content  # absolute link unchanged
+    assert "(/abs2/index.md)" in page2md_content  # absolute link unchanged
+
+    assert "(https://example.com)" in page2md_content  # External link unchanged
+    assert "(#section)" in page2md_content  # Anchor link unchanged
+    assert "(mailto:test1@example.com)" in page2md_content
+    assert "(mailto:test2@example.com)" in page2md_content
+    assert "(ftp://example1.com)" in page2md_content
+    assert "(ftp://example2.com/my/)" in page2md_content  # index.md not included
 
     # Check that llmstxt pages (Markdown) contain links to other llmstxt pages, not HTML ones.
-    assert '"https://example.org/en/0.1.34/index.html"' not in page2md_content
-    assert '"https://example.org/en/0.1.34/page1/"' not in page2md_content
-    assert '"https://example.org/en/0.1.34/page1/index.html"' not in page2md_content
+    assert '"https://example.org/en/0.1.34/index.html"' not in llmsfulltxt_content
+    assert '"https://example.org/en/0.1.34/page1/"' not in llmsfulltxt_content
+    assert '"https://example.org/en/0.1.34/page1/index.html"' not in llmsfulltxt_content
 
     assert '"https://example.org/en/0.1.34/index.html"' not in llmsfulltxt_content
     assert '"https://example.org/en/0.1.34/page1/"' not in llmsfulltxt_content
