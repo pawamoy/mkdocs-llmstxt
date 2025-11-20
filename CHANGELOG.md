@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.5.0](https://github.com/pawamoy/mkdocs-llmstxt/releases/tag/0.5.0) - 2025-11-20
+
+<small>[Compare with 0.4.0](https://github.com/pawamoy/mkdocs-llmstxt/compare/0.4.0...0.5.0)</small>
+
+### Features
+
+- Resolve relative links to absolute ones, link to generated Markdown files ([52e0318](https://github.com/pawamoy/mkdocs-llmstxt/commit/52e0318be1965494a8d3bdc854a25e02e6f71cb8) by 권세인). [Issue-22](https://github.com/pawamoy/mkdocs-llmstxt/issues/22), [PR-26](https://github.com/pawamoy/mkdocs-llmstxt/pull/26), Co-authored-by: Timothée Mazzucotelli <dev@pawamoy.fr>
+
 ## [0.4.0](https://github.com/pawamoy/mkdocs-llmstxt/releases/tag/0.4.0) - 2025-10-03
 
 <small>[Compare with 0.3.2](https://github.com/pawamoy/mkdocs-llmstxt/compare/0.3.2...0.4.0)</small>
