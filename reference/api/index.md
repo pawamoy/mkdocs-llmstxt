@@ -81,6 +81,16 @@ def on_config(self, config: MkDocsConfig) -> MkDocsConfig | None:
     if config.site_url is None:
         raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
     self.mkdocs_config = config
+
+    # Use `base_url` if it exists.
+    if self.config.base_url is not None:
+        self._base_url = cast("str", self.config.base_url)
+    else:
+        # Use `site_url`, which we assume to be always specified.
+        self._base_url = cast("str", self.mkdocs_config.site_url)
+    if not self._base_url.endswith("/"):
+        self._base_url += "/"
+
     return config
 ```
 
@@ -167,21 +177,18 @@ def on_page_content(self, html: str, *, page: Page, **kwargs: Any) -> str | None
             should_autoclean=self.config.autoclean,
             preprocess=self.config.preprocess,
             path=str(path_md),
+            base_uri=self._base_url,
+            page_uri=page.file.dest_uri,
         )
 
         md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
         # Apply the same logic as in the `Page.url` property.
         if md_url in (".", "./"):
             md_url = ""
-
-        # Guaranteed to exist as we require `site_url` to be configured.
-        base = cast("str", self.mkdocs_config.site_url)
-        if not base.endswith("/"):
-            base += "/"
-        md_url = urljoin(base, md_url)
+        md_url = urljoin(self._base_url, md_url)
 
         self._md_pages[src_uri] = _MDPageInfo(
-            title=page.title if page.title is not None else src_uri,
+            title=str(page.title) if page.title is not None else src_uri,
             path_md=path_md,
             md_url=md_url,
             content=page_md,
@@ -247,7 +254,9 @@ def on_post_build(self, *, config: MkDocsConfig, **kwargs: Any) -> None:  # noqa
     if self.config.full_output is not None:
         full_output_file = Path(config.site_dir).joinpath(self.config.full_output)
         for section_name, page_uris in self._sections.items():
-            list_content = "\n".join(self._md_pages[page_uri].content for page_uri in page_uris if page_uri in self._md_pages)
+            list_content = "\n".join(
+                self._md_pages[page_uri].content for page_uri in page_uris if page_uri in self._md_pages
+            )
             full_markdown += f"# {section_name}\n\n{list_content}"
         full_output_file.write_text(full_markdown, encoding="utf8")
         _logger.debug(f"Generated file /{self.config.full_output}.txt")
