@@ -6,7 +6,7 @@ import fnmatch
 from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, cast
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import mdformat
 from bs4 import BeautifulSoup as Soup
@@ -53,6 +53,7 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
     mkdocs_config: MkDocsConfig
     """The global MkDocs configuration."""
 
+    _base_url: str
     _sections: dict[str, dict[str, str]]
     _file_uris: set[str]
     _md_pages: dict[str, _MDPageInfo]
@@ -88,6 +89,16 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
         if config.site_url is None:
             raise ValueError("'site_url' must be set in the MkDocs configuration to be used with the 'llmstxt' plugin")
         self.mkdocs_config = config
+
+        # Use `base_url` if it exists.
+        if self.config.base_url is not None:
+            self._base_url = cast("str", self.config.base_url)
+        else:
+            # Use `site_url`, which we assume to be always specified.
+            self._base_url = cast("str", self.mkdocs_config.site_url)
+        if not self._base_url.endswith("/"):
+            self._base_url += "/"
+
         return config
 
     def on_files(self, files: Files, *, config: MkDocsConfig) -> Files | None:  # noqa: ARG002
@@ -128,25 +139,18 @@ class MkdocsLLMsTxtPlugin(BasePlugin[_PluginConfig]):
                 should_autoclean=self.config.autoclean,
                 preprocess=self.config.preprocess,
                 path=str(path_md),
+                base_uri=self._base_url,
+                page_uri=page.file.dest_uri,
             )
 
             md_url = Path(page.file.dest_uri).with_suffix(".md").as_posix()
             # Apply the same logic as in the `Page.url` property.
             if md_url in (".", "./"):
                 md_url = ""
-
-            # Use `base_url` if it exists.
-            if self.config.base_url is not None:
-                base = cast("str", self.config.base_url)
-            else:
-                # Use `site_url`, which we assume to be always specified.
-                base = cast("str", self.mkdocs_config.site_url)
-            if not base.endswith("/"):
-                base += "/"
-            md_url = urljoin(base, md_url)
+            md_url = urljoin(self._base_url, md_url)
 
             self._md_pages[src_uri] = _MDPageInfo(
-                title=page.title if page.title is not None else src_uri,
+                title=str(page.title) if page.title is not None else src_uri,
                 path_md=path_md,
                 md_url=md_url,
                 content=page_md,
@@ -221,6 +225,8 @@ def _generate_page_markdown(
     should_autoclean: bool,
     preprocess: str | None,
     path: str,
+    base_uri: str,
+    page_uri: str,
 ) -> str:
     """Convert HTML to Markdown.
 
@@ -229,6 +235,8 @@ def _generate_page_markdown(
         should_autoclean: Whether to autoclean the HTML.
         preprocess: An optional path of a Python module containing a `preprocess` function.
         path: The output path of the relevant Markdown file.
+        base_uri: The base URI of the site.
+        page_uri: The destination URI of the page.
 
     Returns:
         The Markdown content.
@@ -238,8 +246,58 @@ def _generate_page_markdown(
         autoclean(soup)
     if preprocess:
         _preprocess(soup, preprocess, path)
+    _convert_to_absolute_links(soup, base_uri, page_uri)
     return mdformat.text(
         _converter.convert_soup(soup),
         options={"wrap": "no"},
         extensions=("tables",),
     )
+
+
+def _convert_to_absolute_links(soup: Soup, base_uri: str, page_uri: str) -> None:
+    """Convert relative links to absolute ones in the HTML.
+
+    Parameters:
+        soup: The soup to modify.
+        base_uri: The base URI of the site.
+        page_uri: The destination URI of the page.
+    """
+    current_dir = Path(page_uri).parent.as_posix()
+
+    # Find all anchor tags with `href` attributes.
+    for link in soup.find_all("a", href=True):
+        href = link.get("href")
+
+        # Skip if `href` is not a string or is empty.
+        if not isinstance(href, str) or not href:
+            continue
+
+        link["href"] = _convert_to_absolute_link(href, base_uri, current_dir)
+
+
+def _convert_to_absolute_link(href: str, base_uri: str, current_dir: str) -> str:
+    # Skip if it's an absolute path
+    if href.startswith("/"):
+        return href
+
+    # Skip if it's an anchor link (starts with `#`).
+    if href.startswith("#"):
+        return href
+
+    # Skip if it's an external link
+    try:
+        if urlparse(href).scheme:
+            return href
+    except ValueError:
+        # Invalid URL, return as is
+        return href
+
+    # Relative path from current directory.
+    relative_base = urljoin(base_uri, current_dir + "/") if current_dir else base_uri
+    final_href = urljoin(relative_base, href)
+
+    # Convert directory paths (ending with `/`) to point to `index.md` files.
+    if final_href.endswith("/"):
+        final_href = final_href + "index.md"
+
+    return final_href

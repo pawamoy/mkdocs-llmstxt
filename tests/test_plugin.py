@@ -1,6 +1,7 @@
 """Tests for the plugin."""
 
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 from mkdocs.commands.build import build
@@ -20,6 +21,7 @@ from mkdocs.config.defaults import MkDocsConfig
                             "sections": {
                                 "Index": ["index.md"],
                                 "Usage": [{"page1.md": "Some usage docs."}],
+                                "Links": [{"page2.md": "Page with links."}],
                             },
                         },
                     },
@@ -27,7 +29,16 @@ from mkdocs.config.defaults import MkDocsConfig
             },
             "pages": {
                 "index.md": "# Hello world",
+                "dummy.md": "# Hello world",
                 "page1.md": "# Usage\n\nSome paragraph.",
+                "page2.md": dedent(
+                    """
+                    # Links
+
+                    [Relative link 1](./index.md)
+                    [Absolute link 1](/abs1/)
+                    """,
+                ),
             },
         },
     ],
@@ -56,3 +67,14 @@ def test_plugin(mkdocs_conf: MkDocsConfig) -> None:
     page1md = Path(mkdocs_conf.site_dir, "page1/index.md")
     assert page1md.exists()
     assert "Some paragraph." in page1md.read_text()
+
+    page2md = Path(mkdocs_conf.site_dir, "page2/index.md")
+    assert page2md.exists()
+    page2md_content = page2md.read_text()
+
+    # Check that relative links are made absolute in each page and in the full llmstxt file.
+    assert "(https://example.org/en/0.1.34/index.md)" in page2md_content
+    assert "(/abs1/)" in page2md_content
+
+    # Check that llmstxt pages (Markdown) contain links to other llmstxt pages, not HTML ones.
+    assert '"https://example.org/en/0.1.34/index.html"' not in llmsfulltxt_content
