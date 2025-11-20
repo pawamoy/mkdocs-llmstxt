@@ -3,7 +3,7 @@
 [![ci](https://github.com/pawamoy/mkdocs-llmstxt/workflows/ci/badge.svg)](https://github.com/pawamoy/mkdocs-llmstxt/actions?query=workflow%3Aci)
 [![documentation](https://img.shields.io/badge/docs-mkdocs-708FCC.svg?style=flat)](https://pawamoy.github.io/mkdocs-llmstxt/)
 [![pypi version](https://img.shields.io/pypi/v/mkdocs-llmstxt.svg)](https://pypi.org/project/mkdocs-llmstxt/)
-[![gitter](https://badges.gitter.im/join%20chat.svg)](https://app.gitter.im/#/room/#mkdocs-llmstxt:gitter.im)
+[![gitter](https://img.shields.io/badge/matrix-chat-4DB798.svg?style=flat)](https://app.gitter.im/#/room/#mkdocs-llmstxt:gitter.im)
 
 MkDocs plugin to generate an [/llms.txt file](https://llmstxt.org/).
 
@@ -67,11 +67,11 @@ plugins:
 
 Use `base_url` to point `llms.txt` to documentation in a specific directory. For example, when using [Read the Docs](https://github.com/readthedocs/), use `base_url` to indicate the path to the hosted docs built for a specific language or version.
 
-The resulting `llms.txt` uses `base_url` when it is specified, instead of the canonical `site_url`.  
+The resulting `llms.txt` uses `base_url` when it is specified, instead of the canonical `site_url`.
 
 ```yaml title="mkdocs.yml"
 plugins:
-- llmstxt: 
+- llmstxt:
     base_url: https://productname.hostname.io/en/0.1.34
 ```
 
@@ -131,3 +131,8 @@ def preprocess(soup: BeautifulSoup, output: str) -> None:
 The `output` argument lets you modify the soup *depending on which file is being generated*.
 
 Have a look at [our own cleaning function](https://pawamoy.github.io/mkdocs-llmstxt/reference/api/#mkdocs_llmstxt.autoclean) to get inspiration.
+
+## Sponsors
+
+<!-- sponsors-start -->
+<!-- sponsors-end -->

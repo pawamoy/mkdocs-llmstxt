@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier.
-_commit: 1.8.4
+_commit: 1.11.1
 _src_path: gh:pawamoy/copier-uv
 author_email: dev@pawamoy.fr
 author_fullname: Timothée Mazzucotelli
@@ -8,7 +8,6 @@ copyright_date: '2025'
 copyright_holder: Timothée Mazzucotelli
 copyright_holder_email: dev@pawamoy.fr
 copyright_license: ISC
-insiders: false
 project_description: MkDocs plugin to generate an /llms.txt file.
 project_name: mkdocs-llmstxt
 python_package_command_line_name: ''
