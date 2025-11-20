@@ -272,28 +272,32 @@ def _convert_to_absolute_links(soup: Soup, base_uri: str, page_uri: str) -> None
         if not isinstance(href, str) or not href:
             continue
 
-        # Skip if it's an absolute path
-        if href.startswith("/"):
-            continue
+        link["href"] = _convert_to_absolute_link(href, base_uri, current_dir)
 
-        # Skip if it's an anchor link (starts with `#`).
-        if href.startswith("#"):
-            continue
 
-        # Skip if it's an external link
-        try:
-            if urlparse(href).scheme:
-                continue
-        except ValueError:
-            # Invalid URL, skip
-            continue
+def _convert_to_absolute_link(href: str, base_uri: str, current_dir: str) -> str:
+    # Skip if it's an absolute path
+    if href.startswith("/"):
+        return href
 
-        # Relative path from current directory.
-        relative_base = urljoin(base_uri, current_dir + "/") if current_dir else base_uri
-        final_href = urljoin(relative_base, href)
+    # Skip if it's an anchor link (starts with `#`).
+    if href.startswith("#"):
+        return href
 
-        # Convert directory paths (ending with `/`) to point to `index.md` files.
-        if final_href.endswith("/"):
-            final_href = final_href + "index.md"
+    # Skip if it's an external link
+    try:
+        if urlparse(href).scheme:
+            return href
+    except ValueError:
+        # Invalid URL, return as is
+        return href
 
-        link["href"] = final_href
+    # Relative path from current directory.
+    relative_base = urljoin(base_uri, current_dir + "/") if current_dir else base_uri
+    final_href = urljoin(relative_base, href)
+
+    # Convert directory paths (ending with `/`) to point to `index.md` files.
+    if final_href.endswith("/"):
+        final_href = final_href + "index.md"
+
+    return final_href

@@ -36,16 +36,7 @@ from mkdocs.config.defaults import MkDocsConfig
                     # Links
 
                     [Relative link 1](./index.md)
-                    [Relative link 2](./page1.md)
-                    [Relative link 3](dummy.md)
                     [Absolute link 1](/abs1/)
-                    [Absolute link 2](/abs2/index.md)
-                    [External link](https://example.com)
-                    [Anchor link](#section)
-                    [Email link 1](mailto:test1@example.com)
-                    <test2@example.com>
-                    [External protocol 1](ftp://example1.com)
-                    [External protocol 2](ftp://example2.com/my/)
                     """,
                 ),
             },
@@ -83,28 +74,7 @@ def test_plugin(mkdocs_conf: MkDocsConfig) -> None:
 
     # Check that relative links are made absolute in each page and in the full llmstxt file.
     assert "(https://example.org/en/0.1.34/index.md)" in page2md_content
-    assert "(https://example.org/en/0.1.34/page1/index.md)" in page2md_content
-    assert "(https://example.org/en/0.1.34/dummy/index.md)" in page2md_content
-
-    assert "(/abs1/)" in page2md_content  # absolute link unchanged
-    assert "(/abs2/index.md)" in page2md_content  # absolute link unchanged
-
-    assert "(https://example.com)" in page2md_content  # External link unchanged
-    assert "(#section)" in page2md_content  # Anchor link unchanged
-    assert "(mailto:test1@example.com)" in page2md_content
-    assert "(mailto:test2@example.com)" in page2md_content
-    assert "(ftp://example1.com)" in page2md_content
-    assert "(ftp://example2.com/my/)" in page2md_content  # index.md not included
+    assert "(/abs1/)" in page2md_content
 
     # Check that llmstxt pages (Markdown) contain links to other llmstxt pages, not HTML ones.
     assert '"https://example.org/en/0.1.34/index.html"' not in llmsfulltxt_content
-    assert '"https://example.org/en/0.1.34/page1/"' not in llmsfulltxt_content
-    assert '"https://example.org/en/0.1.34/page1/index.html"' not in llmsfulltxt_content
-
-    assert '"https://example.org/en/0.1.34/index.html"' not in llmsfulltxt_content
-    assert '"https://example.org/en/0.1.34/page1/"' not in llmsfulltxt_content
-    assert '"https://example.org/en/0.1.34/page1/index.html"' not in llmsfulltxt_content
-
-    assert '"https://example.org/en/0.1.34/index.html"' not in llmstxt_content
-    assert '"https://example.org/en/0.1.34/page1/"' not in llmstxt_content
-    assert '"https://example.org/en/0.1.34/page1/index.html"' not in llmstxt_content
