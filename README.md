@@ -66,6 +66,8 @@ plugins:
       - usage/*.md
 ```
 
+Section patterns use Python's [`fnmatch`](https://docs.python.org/3/library/fnmatch.html) rules. In these patterns, `*` matches directory separators such as `/`. Thus, `usage/*.md` matches files at every depth, including `usage/page.md` and `usage/guides/page.md`. Do not use `usage/**/*.md` to match all files under `usage`. That pattern excludes files directly in `usage`.
+
 ## Override `site_url`
 
 Use `base_url` to point `llms.txt` to documentation in a specific directory. For example, when using [Read the Docs](https://github.com/readthedocs/), use `base_url` to indicate the path to the hosted docs built for a specific language or version.
