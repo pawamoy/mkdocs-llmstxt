@@ -1,5 +1,7 @@
 # mkdocs-llmstxt
 
+> [!WARNING] This project is in maintenance mode. I'm now dedicating my time to [Zensical](https://zensical.org/). Feel free to reach out for a responsible transfer of maintainership.
+
 MkDocs plugin to generate an [/llms.txt file](https://llmstxt.org/).
 
 > /llms.txt - A proposal to standardise on using an /llms.txt file to provide information to help LLMs use a website at inference time.
@@ -61,6 +63,8 @@ plugins:
       - index.md: Main documentation page
       - usage/*.md
 ```
+
+Section patterns use Python's [`fnmatch`](https://docs.python.org/3/library/fnmatch.html) rules. In these patterns, `*` matches directory separators such as `/`. Thus, `usage/*.md` matches files at every depth, including `usage/page.md` and `usage/guides/page.md`. Do not use `usage/**/*.md` to match all files under `usage`. That pattern excludes files directly in `usage`.
 
 ## Override `site_url`
 
