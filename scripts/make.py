@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: ISC
+#
+# ISC License
+#
+# Copyright (c) 2025, Timothée Mazzucotelli and contributors
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 from __future__ import annotations
 
 import os
@@ -15,7 +33,7 @@ if TYPE_CHECKING:
 
 
 PYTHON_VERSIONS = os.getenv("PYTHON_VERSIONS", "3.10 3.11 3.12 3.13 3.14 3.15").split()
-PYTHON_DEV = "3.15"
+PYTHON_DEV = "3.16"
 
 
 def shell(cmd: str, *, capture_output: bool = False, **kwargs: Any) -> str | None:
@@ -117,8 +135,8 @@ def clean() -> None:
     for path in paths_to_clean:
         shutil.rmtree(path, ignore_errors=True)
 
-    cache_dirs = {".cache", ".pytest_cache", ".mypy_cache", ".ruff_cache", "__pycache__"}
-    for dirpath in Path(".").rglob("*/"):
+    cache_dirs = {".cache", ".pytest_cache", ".ruff_cache", "__pycache__"}
+    for dirpath in Path().rglob("*/"):
         if dirpath.parts[0] not in (".venv", ".venvs") and dirpath.name in cache_dirs:
             shutil.rmtree(dirpath, ignore_errors=True)
 
@@ -126,6 +144,11 @@ def clean() -> None:
 def vscode() -> None:
     """Configure VSCode to work on this project."""
     shutil.copytree("config/vscode", ".vscode", dirs_exist_ok=True)
+
+
+def zed() -> None:
+    """Configure Zed to work on this project."""
+    shutil.copytree("config/zed", ".zed", dirs_exist_ok=True)
 
 
 def main() -> int:
@@ -147,11 +170,12 @@ def main() -> int:
                       3.x                   Run a command in the virtual environment for Python 3.x.
                       clean                 Delete build artifacts and cache files.
                       vscode                Configure VSCode to work on this project.
+                      zed                   Configure Zed to work on this project.
                     """,
                 ),
                 flush=True,
             )
-            if os.path.exists(".venv"):
+            if Path(".venv").exists():
                 print("\nAvailable tasks", flush=True)
                 run("default", "duty", "--list")
         return 0
@@ -163,28 +187,28 @@ def main() -> int:
             if not args:
                 print("make: run: missing command", file=sys.stderr)
                 return 1
-            run("default", *args)  # ty: ignore[missing-argument]
+            run("default", *args)
             return 0
 
         if cmd == "multirun":
             if not args:
                 print("make: run: missing command", file=sys.stderr)
                 return 1
-            multirun(*args)  # ty: ignore[missing-argument]
+            multirun(*args)
             return 0
 
         if cmd == "allrun":
             if not args:
                 print("make: run: missing command", file=sys.stderr)
                 return 1
-            allrun(*args)  # ty: ignore[missing-argument]
+            allrun(*args)
             return 0
 
         if cmd.startswith("3."):
             if not args:
                 print("make: run: missing command", file=sys.stderr)
                 return 1
-            run(cmd, *args)  # ty: ignore[missing-argument]
+            run(cmd, *args)
             return 0
 
         opts = []
@@ -197,9 +221,11 @@ def main() -> int:
             setup()
         elif cmd == "vscode":
             vscode()
+        elif cmd == "zed":
+            zed()
         elif cmd == "check":
             multirun("duty", "check-quality", "check-types", "check-docs")
-            run("default", "duty", "check-api")
+            run("default", "duty", "check-security", "check-api")
         elif cmd in {"check-quality", "check-docs", "check-types", "test"}:
             multirun("duty", cmd, *opts)
         else:
