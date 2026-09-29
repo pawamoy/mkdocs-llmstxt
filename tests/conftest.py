@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 def fixture_mkdocs_conf(request: pytest.FixtureRequest, tmp_path: Path) -> MkDocsConfig:
     """Yield a MkDocs configuration object."""
     while hasattr(request, "_parent_request") and hasattr(request._parent_request, "_parent_request"):
-        request = request._parent_request
+        request = request._parent_request  # ty:ignore[invalid-assignment]
     params = getattr(request, "param", {})
     config = params.get("config", {})
     pages = params.get("pages", {})
@@ -48,19 +48,19 @@ def fixture_mkdocs_conf(request: pytest.FixtureRequest, tmp_path: Path) -> MkDoc
             **config,
         },
     )
-    Path(conf.docs_dir).mkdir(exist_ok=True)
+    Path(conf.docs_dir).mkdir(exist_ok=True)  # ty:ignore[unresolved-attribute]
     for page, content in pages.items():
-        page_file = Path(conf.docs_dir, page)
+        page_file = Path(conf.docs_dir, page)  # ty:ignore[unresolved-attribute]
         page_file.parent.mkdir(exist_ok=True)
         page_file.write_text(content)
     assert conf.validate() == ([], [])
-    if "toc" not in conf.markdown_extensions:
+    if "toc" not in conf.markdown_extensions:  # ty:ignore[unresolved-attribute]
         # Guaranteed to be added by MkDocs.
-        conf.markdown_extensions.insert(0, "toc")
-    return conf
+        conf.markdown_extensions.insert(0, "toc")  # ty:ignore[unresolved-attribute]
+    return conf  # ty:ignore[invalid-return-type]
 
 
 @pytest.fixture(name="plugin")
 def fixture_plugin(mkdocs_conf: MkDocsConfig) -> MkdocsLLMsTxtPlugin:
     """Return a plugin instance."""
-    return mkdocs_conf.plugins["llmstxt"]  # type: ignore[return-value]
+    return mkdocs_conf.plugins["llmstxt"]  # ty:ignore[invalid-return-type]
