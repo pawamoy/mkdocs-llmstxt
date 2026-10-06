@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.5.1](https://github.com/pawamoy/mkdocs-llmstxt/releases/tag/0.5.1) - 2026-10-06
+
+<small>[Compare with 0.5.0](https://github.com/pawamoy/mkdocs-llmstxt/compare/0.5.0...0.5.1)</small>
+
+### Build
+
+- Drop support for Python 3.10 ([53623ce](https://github.com/pawamoy/mkdocs-llmstxt/commit/53623ce83bd03b7f7045e3d8473ec10782cde570) by Timothée Mazzucotelli).
+
 ## [0.5.0](https://github.com/pawamoy/mkdocs-llmstxt/releases/tag/0.5.0) - 2025-11-20
 
 <small>[Compare with 0.4.0](https://github.com/pawamoy/mkdocs-llmstxt/compare/0.4.0...0.5.0)</small>
